@@ -23,6 +23,7 @@ from digital_comms.interventions import decide_interventions
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 BASE_PATH = CONFIG['file_locations']['base_path']
+OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
 
 BASE_YEAR = 2016
 END_YEAR = 2030
@@ -242,7 +243,7 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
 def write_lad_results(ict_manager, year, pop_scenario, throughput_scenario,
                       intervention_strategy, cost_by_lad):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(BASE_PATH, 'outputs', 'metrics_{}.csv'.format(suffix))
+    metrics_filename = os.path.join(OUTPUT_FOLDER, 'metrics_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         metrics_file = open(metrics_filename, 'w', newline='')
@@ -273,7 +274,7 @@ def write_lad_results(ict_manager, year, pop_scenario, throughput_scenario,
 def write_pcd_results(ict_manager, year, pop_scenario, throughput_scenario,
                       intervention_strategy, cost_by_pcd):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(BASE_PATH, 'outputs', 'pcd_metrics_{}.csv'.format(suffix))
+    metrics_filename = os.path.join(OUTPUT_FOLDER, 'pcd_metrics_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         metrics_file = open(metrics_filename, 'w', newline='')
@@ -302,7 +303,7 @@ def write_pcd_results(ict_manager, year, pop_scenario, throughput_scenario,
 
 def write_decisions(decisions, year, pop_scenario, throughput_scenario, intervention_strategy):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    decisions_filename = os.path.join(BASE_PATH, 'outputs', 'decisions_{}.csv'.format(suffix))
+    decisions_filename = os.path.join(OUTPUT_FOLDER, 'decisions_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         decisions_file = open(decisions_filename, 'w', newline='')
@@ -331,7 +332,7 @@ def write_decisions(decisions, year, pop_scenario, throughput_scenario, interven
 
 def write_spend(spend, year, pop_scenario, throughput_scenario, intervention_strategy):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    spend_filename = os.path.join(BASE_PATH, 'outputs', 'spend_{}.csv'.format(suffix))
+    spend_filename = os.path.join(OUTPUT_FOLDER, 'spend_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         spend_file = open(spend_filename, 'w', newline='')
