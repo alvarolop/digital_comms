@@ -22,8 +22,13 @@ from digital_comms.interventions import decide_interventions
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
+
 BASE_PATH = CONFIG['file_locations']['base_path']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
+ALVAROS_FOLDER = CONFIG['file_locations']['alvaros_folder']
+print('Base folder is:     ' + BASE_PATH)
+print('Alvaro´s folder is: ' + OUTPUT_FOLDER)
+print('Output folder is:   ' + ALVAROS_FOLDER)
 
 BASE_YEAR = 2016
 END_YEAR = 2030
@@ -56,6 +61,12 @@ ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
 
 # Target threshold for universal mobile service, in Mbps/user
 SERVICE_OBLIGATION_CAPACITY = 10
+
+COVERAGE_OBLIGATION_SCENARIOS = [
+    "high",
+    "baseline",
+    "low",
+]
 
 NETWORKS_TO_INCLUDE = ('A',)
 
@@ -134,6 +145,7 @@ for scenario, filename in scenario_files.items():
             if year in TIMESTEPS:
                 population_by_scenario_year_pcd[scenario][year][pcd_sector] = int(population)
 
+
 user_throughput_by_scenario_year = {
     scenario: {} for scenario in THROUGHPUT_SCENARIOS
 }
@@ -151,6 +163,24 @@ with open(THROUGHPUT_FILENAME, 'r') as throughput_file:
             user_throughput_by_scenario_year["low"][year] = float(low)
         if "static2017" in THROUGHPUT_SCENARIOS:
             user_throughput_by_scenario_year["baseline"][year] = float(base)
+
+
+
+coverage_obligations_by_scenario_year = {
+    scenario: {} for scenario in COVERAGE_OBLIGATION_SCENARIOS
+}
+COVERAGE_OBLIGATIONS_FILENAME = os.path.join(ALVAROS_FOLDER, 'scenario_data', 'per_year_coverage_obligations_scenarios.csv')
+with open(COVERAGE_OBLIGATIONS_FILENAME, 'r') as coverage_obligations_file:
+    reader = csv.reader(coverage_obligations_file)
+    next(reader)  # skip header
+    for year, low, base, high in reader:
+        year = int(year)
+        if "high" in COVERAGE_OBLIGATION_SCENARIOS:
+            coverage_obligations_by_scenario_year["high"][year] = float(high)
+        if "baseline" in COVERAGE_OBLIGATION_SCENARIOS:
+            coverage_obligations_by_scenario_year["baseline"][year] = float(base)
+        if "low" in COVERAGE_OBLIGATION_SCENARIOS:
+            coverage_obligations_by_scenario_year["low"][year] = float(low)
 
 
 ################################################################
@@ -405,7 +435,9 @@ for pop_scenario, throughput_scenario, intervention_strategy in [
 
         # Decide on new interventions
         budget = ANNUAL_BUDGET
-        service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
+        # service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
+        service_obligation_capacity = coverage_obligations_by_scenario_year[intervention_strategy][year]
+
 
         # simulate first
         if year == BASE_YEAR:
