@@ -24,8 +24,8 @@ CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
 BASE_PATH = CONFIG['file_locations']['base_path']
-OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
 ALVAROS_FOLDER = CONFIG['file_locations']['alvaros_folder']
+OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
 print('Base folder is:     ' + BASE_PATH)
 print('Alvaro´s folder is: ' + OUTPUT_FOLDER)
 print('Output folder is:   ' + ALVAROS_FOLDER)
@@ -395,33 +395,23 @@ def _get_suffix(pop_scenario, throughput_scenario, intervention_strategy):
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
 
-for pop_scenario, throughput_scenario, intervention_strategy in [
-        ('low', 'low', 'minimal'),
-        ('baseline', 'baseline', 'minimal'),
-        ('high', 'high', 'minimal'),
-        ('static2017', 'baseline', 'minimal'),
+for pop_scenario, throughput_scenario, service_obligation_strategy in [
+        ('low', 'low', 'low'),
+        ('baseline', 'baseline', 'low'),
+        ('high', 'high', 'low'),
+        ('static2017', 'baseline', 'low'),
 
-        ('low', 'low', 'macrocell'),
-        ('baseline', 'baseline', 'macrocell'),
-        ('high', 'high', 'macrocell'),
-        ('static2017', 'baseline', 'macrocell'),
+        ('low', 'low', 'baseline'),
+        ('baseline', 'baseline', 'baseline'),
+        ('high', 'high', 'baseline'),
+        ('static2017', 'baseline', 'baseline'),
 
-        ('low', 'low', 'macrocell_700'),
-        ('baseline', 'baseline', 'macrocell_700'),
-        ('high', 'high', 'macrocell_700'),
-        ('static2017', 'baseline', 'macrocell_700'),
-
-        ('low', 'low', 'small_cell'),
-        ('baseline', 'baseline', 'small_cell'),
-        ('high', 'high', 'small_cell'),
-        ('static2017', 'baseline', 'small_cell'),
-
-        ('low', 'low', 'small_cell_and_spectrum'),
-        ('baseline', 'baseline', 'small_cell_and_spectrum'),
-        ('high', 'high', 'small_cell_and_spectrum'),
-        ('static2017', 'baseline', 'small_cell_and_spectrum')
+        ('low', 'low', 'high'),
+        ('baseline', 'baseline', 'high'),
+        ('high', 'high', 'high'),
+        ('static2017', 'baseline', 'high')
     ]:
-    print("Running:", pop_scenario, throughput_scenario, intervention_strategy)
+    print("Running:", pop_scenario, throughput_scenario, service_obligation_strategy)
 
     assets = initial_system[:]
     for year in TIMESTEPS:
@@ -436,8 +426,10 @@ for pop_scenario, throughput_scenario, intervention_strategy in [
         # Decide on new interventions
         budget = ANNUAL_BUDGET
         # service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
-        service_obligation_capacity = coverage_obligations_by_scenario_year[intervention_strategy][year]
+        service_obligation_capacity = coverage_obligations_by_scenario_year[service_obligation_strategy][year]
 
+        # Fixed intervention strategy
+        intervention_strategy = 'macrocell_700'
 
         # simulate first
         if year == BASE_YEAR:
