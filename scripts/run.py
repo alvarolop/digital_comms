@@ -8,8 +8,12 @@ import csv
 import itertools
 import os
 import pprint
+import matlab.engine
+import subprocess
 
+from pdb import set_trace as bp
 from collections import defaultdict
+#from subprocess import run
 
 from digital_comms.ccam import ICTManager
 from digital_comms.interventions import decide_interventions
@@ -20,17 +24,35 @@ from digital_comms.interventions import decide_interventions
 # - data files base path
 ################################################################
 
+#eng = matlab.engine.start_matlab() # ("-desktop") para abrir la GUI
+#eng.addpath(r'D:\Dropbox\00TFM\original_nismod\digital_comms\matlab_scripts',nargout=0)
+
+#ret = eng.triarea(1.0,5.0)
+#print("Triarea : ")
+#print(ret)
+
+subprocess.run("python setup.py install")
+
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
 BASE_PATH = CONFIG['file_locations']['base_path']
 ALVAROS_FOLDER = CONFIG['file_locations']['alvaros_folder']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
-print('Base folder is:     ' + BASE_PATH)
-print('Alvaro´s folder is: ' + OUTPUT_FOLDER)
-print('Output folder is:   ' + ALVAROS_FOLDER)
 
-BASE_YEAR = 2016
+#BUDGET_LIMIT = CONFIG['code_configuration']['budget_limit']
+
+print('')
+print('----------------------------------')
+print('Base folder is:     ' + BASE_PATH)
+print('Alvaro´s folder is: ' + ALVAROS_FOLDER)
+print('Output folder is:   ' + OUTPUT_FOLDER)
+print('')
+#print('Budget limit is:     ' + BUDGET_LIMIT)
+print('----------------------------------')
+print('')
+
+BASE_YEAR = 2020
 END_YEAR = 2030
 TIMESTEP_INCREMENT = 1
 TIMESTEPS = range(BASE_YEAR, END_YEAR + 1, TIMESTEP_INCREMENT)
@@ -54,7 +76,13 @@ INTERVENTION_STRATEGIES = [
     "small_cell_and_spectrum"
 ]
 
-MARKET_SHARE = 0.3
+COVERAGE_OBLIGATION_SCENARIOS = [
+    "high",
+    "baseline",
+    "low",
+]
+
+MARKET_SHARE = 0.2
 
 # Annual capital budget constraint for the whole industry, GBP * market share
 ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
@@ -62,13 +90,52 @@ ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
 # Target threshold for universal mobile service, in Mbps/user
 SERVICE_OBLIGATION_CAPACITY = 10
 
-COVERAGE_OBLIGATION_SCENARIOS = [
-    "high",
-    "baseline",
-    "low",
-]
-
 NETWORKS_TO_INCLUDE = ('A',)
+
+
+RUN_OPTIONS_ORIGINAL = [
+        ('low', 'low', 'minimal'),
+        ('baseline', 'baseline', 'minimal'),
+        ('high', 'high', 'minimal'),
+        ('static2017', 'baseline', 'minimal'),
+
+        ('low', 'low', 'macrocell'),
+        ('baseline', 'baseline', 'macrocell'),
+        ('high', 'high', 'macrocell'),
+        ('static2017', 'baseline', 'macrocell'),
+
+        ('low', 'low', 'macrocell_700'),
+        ('baseline', 'baseline', 'macrocell_700'),
+        ('high', 'high', 'macrocell_700'),
+        ('static2017', 'baseline', 'macrocell_700'),
+
+        ('low', 'low', 'small_cell'),
+        ('baseline', 'baseline', 'small_cell'),
+        ('high', 'high', 'small_cell'),
+        ('static2017', 'baseline', 'small_cell'),
+
+        ('low', 'low', 'small_cell_and_spectrum'),
+        ('baseline', 'baseline', 'small_cell_and_spectrum'),
+        ('high', 'high', 'small_cell_and_spectrum'),
+        ('static2017', 'baseline', 'small_cell_and_spectrum')
+    ]
+
+RUN_OPTIONS = [
+        ('low', 'low', 'low'),
+        ('baseline', 'baseline', 'low'),
+        ('high', 'high', 'low'),
+        ('static2017', 'baseline', 'low'),
+
+        ('low', 'low', 'baseline'),
+        ('baseline', 'baseline', 'baseline'),
+        ('high', 'high', 'baseline'),
+        ('static2017', 'baseline', 'baseline'),
+
+        ('low', 'low', 'high'),
+        ('baseline', 'baseline', 'high'),
+        ('high', 'high', 'high'),
+        ('static2017', 'baseline', 'high')
+    ]
 
 ################################################################
 # LOAD REGIONS
@@ -145,7 +212,7 @@ for scenario, filename in scenario_files.items():
             if year in TIMESTEPS:
                 population_by_scenario_year_pcd[scenario][year][pcd_sector] = int(population)
 
-
+# DEMAND
 user_throughput_by_scenario_year = {
     scenario: {} for scenario in THROUGHPUT_SCENARIOS
 }
@@ -163,8 +230,6 @@ with open(THROUGHPUT_FILENAME, 'r') as throughput_file:
             user_throughput_by_scenario_year["low"][year] = float(low)
         if "static2017" in THROUGHPUT_SCENARIOS:
             user_throughput_by_scenario_year["baseline"][year] = float(base)
-
-
 
 coverage_obligations_by_scenario_year = {
     scenario: {} for scenario in COVERAGE_OBLIGATION_SCENARIOS
@@ -273,7 +338,7 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
 def write_lad_results(ict_manager, year, pop_scenario, throughput_scenario,
                       intervention_strategy, cost_by_lad):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(OUTPUT_FOLDER, 'metrics_{}.csv'.format(suffix))
+    metrics_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'metrics_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         metrics_file = open(metrics_filename, 'w', newline='')
@@ -304,7 +369,7 @@ def write_lad_results(ict_manager, year, pop_scenario, throughput_scenario,
 def write_pcd_results(ict_manager, year, pop_scenario, throughput_scenario,
                       intervention_strategy, cost_by_pcd):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(OUTPUT_FOLDER, 'pcd_metrics_{}.csv'.format(suffix))
+    metrics_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'pcd_metrics_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         metrics_file = open(metrics_filename, 'w', newline='')
@@ -333,7 +398,7 @@ def write_pcd_results(ict_manager, year, pop_scenario, throughput_scenario,
 
 def write_decisions(decisions, year, pop_scenario, throughput_scenario, intervention_strategy):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    decisions_filename = os.path.join(OUTPUT_FOLDER, 'decisions_{}.csv'.format(suffix))
+    decisions_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'decisions_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         decisions_file = open(decisions_filename, 'w', newline='')
@@ -362,21 +427,21 @@ def write_decisions(decisions, year, pop_scenario, throughput_scenario, interven
 
 def write_spend(spend, year, pop_scenario, throughput_scenario, intervention_strategy):
     suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    spend_filename = os.path.join(OUTPUT_FOLDER, 'spend_{}.csv'.format(suffix))
+    spend_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'spend_{}.csv'.format(suffix))
 
     if year == BASE_YEAR:
         spend_file = open(spend_filename, 'w', newline='')
         spend_writer = csv.writer(spend_file)
         spend_writer.writerow(
-            ('year', 'pcd_sector', 'lad', 'item', 'cost'))
+            ('year', 'pcd_sector', 'lad', 'item', 'cost', 'reason'))
     else:
         spend_file = open(spend_filename, 'a', newline='')
         spend_writer = csv.writer(spend_file)
 
     # output and report results for this timestep
-    for pcd_sector, lad, item, cost in spend:
+    for pcd_sector, lad, item, cost, reason in spend:
         spend_writer.writerow(
-            (year, pcd_sector, lad, item, cost))
+            (year, pcd_sector, lad, item, cost, reason))
 
     spend_file.close()
 
@@ -394,26 +459,14 @@ def _get_suffix(pop_scenario, throughput_scenario, intervention_strategy):
 # - run over population scenario / demand scenario / intervention strategy combinations
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
+# coverage_vs_demand=[]
 
-for pop_scenario, throughput_scenario, service_obligation_strategy in [
-        ('low', 'low', 'low'),
-        ('baseline', 'baseline', 'low'),
-        ('high', 'high', 'low'),
-        ('static2017', 'baseline', 'low'),
+for pop_scenario, throughput_scenario, coverage_scenario in RUN_OPTIONS:
 
-        ('low', 'low', 'baseline'),
-        ('baseline', 'baseline', 'baseline'),
-        ('high', 'high', 'baseline'),
-        ('static2017', 'baseline', 'baseline'),
-
-        ('low', 'low', 'high'),
-        ('baseline', 'baseline', 'high'),
-        ('high', 'high', 'high'),
-        ('static2017', 'baseline', 'high')
-    ]:
-    print("Running:", pop_scenario, throughput_scenario, service_obligation_strategy)
-
+    print("Running:", pop_scenario, throughput_scenario, coverage_scenario)
     assets = initial_system[:]
+    intervention_strategy = "macrocell_700"
+
     for year in TIMESTEPS:
         print("-", year)
 
@@ -421,15 +474,13 @@ for pop_scenario, throughput_scenario, service_obligation_strategy in [
         for pcd_sector in pcd_sectors:
             pcd_sector_id = pcd_sector["id"]
             pcd_sector["population"] = population_by_scenario_year_pcd[pop_scenario][year][pcd_sector_id]
-            pcd_sector["user_throughput"] = user_throughput_by_scenario_year[throughput_scenario][year]
+            pcd_sector["user_throughput"] = 0
+            # pcd_sector["user_throughput"] = user_throughput_by_scenario_year[throughput_scenario][year]
 
         # Decide on new interventions
         budget = ANNUAL_BUDGET
-        # service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
-        service_obligation_capacity = coverage_obligations_by_scenario_year[service_obligation_strategy][year]
-
-        # Fixed intervention strategy
-        intervention_strategy = 'macrocell_700'
+        service_obligation_capacity = coverage_obligations_by_scenario_year[coverage_scenario][year]
+        print('Coverage obligation : ' + repr(service_obligation_capacity))
 
         # simulate first
         if year == BASE_YEAR:
@@ -446,9 +497,20 @@ for pop_scenario, throughput_scenario, service_obligation_strategy in [
 
         cost_by_lad = defaultdict(int)
         cost_by_pcd = defaultdict(int)
-        for pcd, lad, item, cost in spend:
+        for pcd, lad, item, cost, reason in spend:
             cost_by_lad[lad] += cost
             cost_by_pcd[pcd] += cost
+
+        #for pcd, 
+        # Group by pcd: demand, coverage, both or none
+        # Count PCDs for each year and type and give a percentage.
+        #coverage_vs_demand.append((area.id, area.lad_id, reason))
+
+        #test = []
+        #b = ['a','b','c','d','e']
+        #test.append(b)
+        #for a,b,c,d,e in test:
+        #    print(a)
 
         write_decisions(interventions_built, year, pop_scenario,
                         throughput_scenario, intervention_strategy)

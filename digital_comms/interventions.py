@@ -11,6 +11,12 @@ import math
 # - TODO come back to net present value or total cost of ownership for costs
 ################################################################
 
+# budget_limit. If true limit depending of the GBP
+BUDGET_LIMIT = True
+
+# Coverage obligations apply only to towns smaller than POPULATION_LIMIT inhabitants
+POPULATION_LIMIT = 5001
+
 # Postcode-sector level individual interventions
 INTERVENTIONS = {
     'upgrade_to_lte': {
@@ -193,21 +199,22 @@ def meet_service_obligation(budget, available_interventions, timestep,
                             service_obligation_capacity, system):
     areas = _suggest_target_postcodes(system, service_obligation_capacity)
     return _suggest_interventions(
-        budget, available_interventions, areas, timestep, service_obligation_capacity)
+        budget, available_interventions, areas, timestep, 'meet_service_obligation', service_obligation_capacity)
 
 
 def meet_demand(budget, available_interventions, timestep, system):
     areas = _suggest_target_postcodes(system)
     return _suggest_interventions(
-        budget, available_interventions, areas, timestep)
+        budget, available_interventions, areas, timestep, 'meet_demand')
 
 
-def _suggest_interventions(budget, available_interventions, areas, timestep, threshold=None):
+def _suggest_interventions(budget, available_interventions, areas, timestep, reason, threshold=None):
     built_interventions = []
     spend = []
+
     for area in areas:
         area_interventions = []
-        if budget < 0:
+        if BUDGET_LIMIT and budget < 0:
             break
 
         if _area_satisfied(area, area_interventions, threshold):
@@ -239,11 +246,11 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, thr
                         built_interventions.append(to_build)
 
                     budget -= cost
-                    spend.append((area.id, area.lad_id, 'upgrade_to_lte', cost))
-                    if budget < 0:
+                    spend.append((area.id, area.lad_id, 'upgrade_to_lte', cost, reason))
+                    if BUDGET_LIMIT and budget < 0:
                         break
 
-        if budget < 0:
+        if BUDGET_LIMIT and budget < 0:
             break
 
         # integrate_700
@@ -267,12 +274,12 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, thr
                         area_interventions.append(to_build)
                         built_interventions.append(to_build)
 
-                    spend.append((area.id, area.lad_id, 'carrier_700', cost))
+                    spend.append((area.id, area.lad_id, 'carrier_700', cost, reason))
                     budget -= cost
-                    if budget < 0:
+                    if BUDGET_LIMIT and budget < 0:
                         break
 
-        if budget < 0:
+        if BUDGET_LIMIT and budget < 0:
             break
 
         # integrate_3.5
@@ -296,12 +303,12 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, thr
                         area_interventions.append(to_build)
                         built_interventions.append(to_build)
 
-                    spend.append((area.id, area.lad_id, 'carrier_3500', cost))
+                    spend.append((area.id, area.lad_id, 'carrier_3500', cost, reason))
                     budget -= cost
-                    if budget < 0:
+                    if BUDGET_LIMIT and budget < 0:
                         break
 
-        if budget < 0:
+        if BUDGET_LIMIT and budget < 0:
             break
 
         # build small cells to next density
@@ -325,10 +332,10 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, thr
 
                 area_interventions += to_build
                 built_interventions += to_build
-                spend.append((area.id, area.lad_id, 'small_cells', cost))
+                spend.append((area.id, area.lad_id, 'small_cells', cost, reason))
                 budget -= cost
 
-                if budget < 0 or _area_satisfied(area, area_interventions, threshold):
+                if (BUDGET_LIMIT and budget < 0) or _area_satisfied(area, area_interventions, threshold):
                     break
 
     return built_interventions, budget, spend
@@ -349,9 +356,13 @@ def _suggest_target_postcodes(system, threshold=None):
     total_postcodes = len(postcodes)
     if threshold is not None:
         considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < threshold]
+        print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
+        # Take only PCD with less than X inhabitants
+        considered_postcodes = [pcd for pcd in postcodes if pcd.population < POPULATION_LIMIT]
+        print("Considering {} of {} postcodes with less than {}".format(len(considered_postcodes), total_postcodes, POPULATION_LIMIT))
     else:
         considered_postcodes = [p for p in postcodes]
-    # print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
+        print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
     return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
 
 def _area_satisfied(area, built_interventions, threshold):
