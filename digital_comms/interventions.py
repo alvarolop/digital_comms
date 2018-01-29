@@ -356,13 +356,13 @@ def _suggest_target_postcodes(system, threshold=None):
     total_postcodes = len(postcodes)
     if threshold is not None:
         considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < threshold]
-        print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
+        #print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
         # Take only PCD with less than X inhabitants
         considered_postcodes = [pcd for pcd in postcodes if pcd.population < POPULATION_LIMIT]
-        print("Considering {} of {} postcodes with less than {}".format(len(considered_postcodes), total_postcodes, POPULATION_LIMIT))
+        #print("Considering {} of {} postcodes with less than {}".format(len(considered_postcodes), total_postcodes, POPULATION_LIMIT))
     else:
         considered_postcodes = [p for p in postcodes]
-        print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
+        #print("Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
     return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
 
 def _area_satisfied(area, built_interventions, threshold):

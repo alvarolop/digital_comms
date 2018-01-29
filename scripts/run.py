@@ -446,7 +446,7 @@ def write_spend(spend, year, pop_scenario, throughput_scenario, intervention_str
     spend_file.close()
 
 def _get_suffix(pop_scenario, throughput_scenario, intervention_strategy):
-    suffix = 'pop_{}_throughput_{}_strategy_{}'.format(
+    suffix = 'pop_{}_throughput_{}_coverage_{}'.format(
         pop_scenario, throughput_scenario, intervention_strategy)
     # for length, use 'base' for baseline scenarios
     suffix = suffix.replace('baseline', 'base')
@@ -476,11 +476,12 @@ for pop_scenario, throughput_scenario, coverage_scenario in RUN_OPTIONS:
             pcd_sector["population"] = population_by_scenario_year_pcd[pop_scenario][year][pcd_sector_id]
             pcd_sector["user_throughput"] = 0
             # pcd_sector["user_throughput"] = user_throughput_by_scenario_year[throughput_scenario][year]
-
+            
         # Decide on new interventions
         budget = ANNUAL_BUDGET
-        service_obligation_capacity = coverage_obligations_by_scenario_year[coverage_scenario][year]
-        print('Coverage obligation : ' + repr(service_obligation_capacity))
+        #service_obligation_capacity = coverage_obligations_by_scenario_year[coverage_scenario][year]
+        service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
+        # print('Coverage obligation : ' + repr(service_obligation_capacity))
 
         # simulate first
         if year == BASE_YEAR:
@@ -512,11 +513,7 @@ for pop_scenario, throughput_scenario, coverage_scenario in RUN_OPTIONS:
         #for a,b,c,d,e in test:
         #    print(a)
 
-        write_decisions(interventions_built, year, pop_scenario,
-                        throughput_scenario, intervention_strategy)
-        write_spend(spend, year, pop_scenario, throughput_scenario,
-                    intervention_strategy)
-        write_lad_results(system, year, pop_scenario, throughput_scenario,
-                          intervention_strategy, cost_by_lad)
-        write_pcd_results(system, year, pop_scenario, throughput_scenario,
-                          intervention_strategy, cost_by_pcd)
+        write_decisions(interventions_built, year, pop_scenario, throughput_scenario, coverage_scenario)
+        write_spend(spend, year, pop_scenario, throughput_scenario, coverage_scenario)
+        write_lad_results(system, year, pop_scenario, throughput_scenario, coverage_scenario, cost_by_lad)
+        write_pcd_results(system, year, pop_scenario, throughput_scenario, coverage_scenario, cost_by_pcd)
