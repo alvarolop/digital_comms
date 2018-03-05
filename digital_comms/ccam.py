@@ -79,13 +79,16 @@ class ICTManager(object):
             TODO
     """
 
-    def __init__(self, lads, pcd_sectors, assets, capacity_lookup_table, clutter_lookup):
+    def __init__(self, lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup):
         """ Load the `lads` in local :obj:`dict` attribute `lad`
         Record the assets, capacity and clutter per postcode sector in the :obj:`dict` attribute `postcode_sectors`
         """
 
         # Area ID (integer?) => Area
         self.lads = {}
+        
+        # Area ID (integer?) => Area
+        self.ofcom_lads = {}
 
         # List of all postcode sectors
         self.postcode_sectors = {}
@@ -96,6 +99,13 @@ class ICTManager(object):
             lad_id = lad_data["id"]
             # create LAD object using lad_data and put in self.lads dict
             self.lads[lad_id] = LAD(lad_data)
+            
+        # lad_data in lads <-'lads' is the list of dicts of lad data
+        for lad_data in ofcom_lads:
+            # find ID out of lads list of dicts
+            lad_id = lad_data["lad_id"]
+            # create LAD object using lad_data and put in self.lads dict
+            self.ofcom_lads[lad_id] = LAD_OFCOM(lad_data)
 
         assets_by_pcd = defaultdict(list)
         for asset in assets:
@@ -103,16 +113,20 @@ class ICTManager(object):
 
         for pcd_sector_data in pcd_sectors:
             lad_id = pcd_sector_data["lad_id"]
+            ofcom_lad_id = ofcom_380_to_174[lad_id]
             pcd_sector_id = pcd_sector_data["id"]
             assets = assets_by_pcd[pcd_sector_id]
-            pcd_sector = PostcodeSector(
-                pcd_sector_data, assets, capacity_lookup_table, clutter_lookup)
+            pcd_sector = PostcodeSector(pcd_sector_data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup)
 
             # add PostcodeSector to simple list
             self.postcode_sectors[pcd_sector_id] = pcd_sector
-
+            
             # add PostcodeSector to LAD
             lad_containing_pcd_sector = self.lads[lad_id]
+            lad_containing_pcd_sector.add_pcd_sector(pcd_sector)
+            
+            # add PostcodeSector to LAD_OFCOM
+            lad_containing_pcd_sector = self.ofcom_lads[ofcom_380_to_174[lad_id]]
             lad_containing_pcd_sector.add_pcd_sector(pcd_sector)
 
 class LAD(object):
@@ -269,19 +283,195 @@ class LAD(object):
             pcd_sector.population
             for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
+    
+    @property
+    def capacity_margin(self):
+        """obj: Capacity margin per postcode sector in Mbps
+        """
+        capacity_margin = self.capacity - self.demand
+        return capacity_margin
+    
+    
+class LAD_OFCOM(object):
+    """Local area district. 
+    
+    Represents an area to be modelled, contains data for demand 
+    characterisation and assets for supply assessment.
+
+    Arguments
+    ---------
+    data: dict
+        Metadata and info for the LAD
+        
+        * id: :obj:`int`
+            Unique ID
+        * name: :obj:`str`
+            Name of the LAD
+    """
+    def __init__(self, data):
+        self.id = data["lad_id"]
+        self.name = data["name"]
+        self._pcd_sectors = {}
+
+    def __repr__(self):
+        return "<LAD id:{} name:{}>".format(self.id, self.name)
+
+    @property
+    def population(self):
+        """obj: Sum of all postcode sectors populations in the local area district
+        """
+        return sum([
+            pcd_sector.population
+            for pcd_sector in self._pcd_sectors.values()])
+
+    @property
+    def population_density(self):
+        """obj: The population density in the local area district
+        """
+        total_area = sum([
+            pcd_sector.area
+            for pcd_sector in self._pcd_sectors.values()])
+        if total_area == 0:
+            return 0
+        else:
+            return self.population / total_area
+
+    def add_pcd_sector(self, pcd_sector):
+        """Add a postcode sector to the local area district.
+
+        Arguments
+        ---------
+        pcd_sector: PostcodeSector
+            Representation of a postcode sector that needs to be
+            added to the local area district
+        """
+        self._pcd_sectors[pcd_sector.id] = pcd_sector
+
+    def add_asset(self, asset):
+        """Add an asset to postcode sector
+
+        Arguments
+        ---------
+        asset: TODO
+            TODO
+        """
+        pcd_sector_id = asset.pcd_sector
+        self._pcd_sectors[pcd_sector_id].add_asset(asset)
+
+    def system(self):
+        """Populates a dict with all existing assets
+        Which in total represents the system.
+
+        Returns
+        -------
+        dict
+            TODO
+        """
+        system = {}
+        for pcd_sector in self._pcd_sectors.values():
+            pcd_system = pcd_sector.system()
+            for tech, cells in pcd_system.items():
+                # check tech is in system
+                if tech not in system:
+                    system[tech] = 0
+                # add number of cells to tech in area
+                system[tech] += cells
+        return system
+
+    @property
+    def capacity(self):
+        """Calculate mean capacity from all nested postcode sectors
+
+        Returns
+        -------
+        obj
+            Mean capacity of the local area district
+
+        Notes
+        -----
+        Function returns `0` when no postcode sectors are configured to the LAD.
+        """
+        if not self._pcd_sectors:
+            return 0
+
+        summed_capacity = sum([
+            pcd_sector.capacity
+            for pcd_sector in self._pcd_sectors.values()])
+        return summed_capacity / len(self._pcd_sectors)
+
+    @property
+    def demand(self):
+        """Calculate demand per square kilometer (Mbps km^2) from all nested postcode sectors
+
+        Returns
+        -------
+        obj 
+            Demand of the local area district
+
+        Notes
+        -----
+        Function returns `0` when no postcode sectors are configured to the LAD.
+        """
+        if not self._pcd_sectors:
+            return 0
+
+        summed_demand = sum(
+            pcd_sector.demand * pcd_sector.area
+            for pcd_sector in self._pcd_sectors.values()
+        )
+        summed_area = sum(
+            pcd_sector.area
+            for pcd_sector in self._pcd_sectors.values()
+        )
+        return summed_demand / summed_area
+
+    def coverage(self):
+        """Calculate coverage as the proportion of the population able to obtain the specified capacity threshold
+
+        Returns
+        -------
+        obj
+            Coverage in the local area district
+
+        Notes
+        -----
+        Function returns `0` when no postcode sectors are configured to the LAD.
+        """
+        if not self._pcd_sectors:
+            return 0
+
+        population_with_coverage = sum([
+            pcd_sector.population
+            for pcd_sector in self._pcd_sectors.values()
+            if pcd_sector.capacity >= SERVICE_OBLIGATION_CAPACITY])
+        total_pop = sum([
+            pcd_sector.population
+            for pcd_sector in self._pcd_sectors.values()])
+        return float(population_with_coverage) / total_pop
+    
+    @property
+    def capacity_margin(self):
+        """obj: Capacity margin per postcode sector in Mbps
+        """
+        capacity_margin = self.capacity - self.demand
+        return capacity_margin
 
 
 class PostcodeSector(object):
     """Represents a Postcode sector to be modelled
     """
-    def __init__(self, data, assets, capacity_lookup_table, clutter_lookup):
+    def __init__(self, data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup):
         self.id = data["id"]
         self.lad_id = data["lad_id"]
+        self.ofcom_lad_id = ofcom_lad_id
         self.population = data["population"]
         self.area = data["area"]
 
-        self.user_throughput = data["user_throughput"]
-        self.user_demand = self._calculate_user_demand(self.user_throughput)
+        self.user_throughput_GB = data["user_throughput_GB"]
+        self.user_throughput_mbps = data["user_throughput_mbps"]
+        
+        self.user_demand_GB = self._calculate_user_demand(self.user_throughput_GB)
+        self.user_demand_mbps = self.user_throughput_mbps
 
         self._capacity_lookup_table = capacity_lookup_table
         self._clutter_lookup = clutter_lookup
@@ -361,9 +551,16 @@ class PostcodeSector(object):
             = ~0.16 Mbps/km^2 area capacity demand
         """
         users = self.population * self.penetration * 0.3 #market share
-        user_throughput = users * self.user_demand
-        capacity_per_kmsq = user_throughput / self.area
-        return capacity_per_kmsq
+
+        # Demand of GB
+        user_throughput_GB = users * self.user_demand_GB * 1 / 20 # oversubscription factor
+        capacity_per_kmsq_GB = user_throughput_GB / self.area
+        
+        # Demand of mbps
+        user_throughput_mbps = users * self.user_demand_mbps * 1 / 20 # oversubscription factor
+        capacity_per_kmsq_mbps = user_throughput_mbps / self.area
+        
+        return max(capacity_per_kmsq_mbps, capacity_per_kmsq_GB)
 
     @property
     def population_density(self):

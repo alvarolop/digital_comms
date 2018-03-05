@@ -1,0 +1,45 @@
+Utils
+
+###
+# Anaconda Prompt
+###
+conda activate TFM
+
+cd .\git\digital_comms
+
+python setup.py install
+
+python .\scripts\run.py
+
+pop_{}_throughput_{}_coverage_{} => chart_1_pop_static2017_throughput_base_coverage_high.csv
+
+plot_chart_1('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_1_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+plot_chart_2('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_2_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+plot_chart_3('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_3_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+
+
+plot_chart_1_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_1_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+plot_chart_2_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_2_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+plot_chart_3_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_3_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
+
+
+
+######
+# USING MATPLOTLIB
+# https://chrishavlin.wordpress.com/2016/11/16/shapefiles-tutorial/
+######
+
+1. Install the new packages
+
+conda update -n base conda
+conda install -c conda-forge matplotlib
+conda install -c conda-forge numpy
+conda install -c conda-forge pyshp
+
+conda install -c anaconda basemap 
+
+
+2. Copy the code
+
+
+

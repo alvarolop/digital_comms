@@ -5,18 +5,24 @@
 # pylint: disable=C0103
 import configparser
 import csv
-import itertools
 import os
-import pprint
-import matlab.engine
-import subprocess
+import sys
 
 from pdb import set_trace as bp
 from collections import defaultdict
 #from subprocess import run
 
+#print('')
+#print('----------------------------------')
+#print('--> Updating digital_comms libraries')
+#subprocess.run("python setup.py install")
+#print('')
+
 from digital_comms.ccam import ICTManager
 from digital_comms.interventions import decide_interventions
+from digital_comms.Results import Results
+import digital_comms.Save_data as save_data
+
 
 ################################################################
 # SETUP MODEL RUN CONFIGURATION
@@ -24,30 +30,20 @@ from digital_comms.interventions import decide_interventions
 # - data files base path
 ################################################################
 
-#eng = matlab.engine.start_matlab() # ("-desktop") para abrir la GUI
-#eng.addpath(r'D:\Dropbox\00TFM\original_nismod\digital_comms\matlab_scripts',nargout=0)
-
-#ret = eng.triarea(1.0,5.0)
-#print("Triarea : ")
-#print(ret)
-
-subprocess.run("python setup.py install")
-
 CONFIG = configparser.ConfigParser()
 CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
-BASE_PATH = CONFIG['file_locations']['base_path']
-ALVAROS_FOLDER = CONFIG['file_locations']['alvaros_folder']
+INPUT_FOLDER = CONFIG['file_locations']['input_folder']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
 
 #BUDGET_LIMIT = CONFIG['code_configuration']['budget_limit']
 
 print('')
 print('----------------------------------')
-print('Base folder is:     ' + BASE_PATH)
-print('Alvaro´s folder is: ' + ALVAROS_FOLDER)
+print('Input  folder is: ' + INPUT_FOLDER)
 print('Output folder is:   ' + OUTPUT_FOLDER)
-print('')
+
+#print('')
 #print('Budget limit is:     ' + BUDGET_LIMIT)
 print('----------------------------------')
 print('')
@@ -88,10 +84,11 @@ MARKET_SHARE = 0.2
 ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
 
 # Target threshold for universal mobile service, in Mbps/user
-SERVICE_OBLIGATION_CAPACITY = 10
+SERVICE_OBLIGATION_CAPACITY = 500
 
 NETWORKS_TO_INCLUDE = ('A',)
 
+PREPARE_TO_PRINT = True
 
 RUN_OPTIONS_ORIGINAL = [
         ('low', 'low', 'minimal'),
@@ -120,21 +117,43 @@ RUN_OPTIONS_ORIGINAL = [
         ('static2017', 'baseline', 'small_cell_and_spectrum')
     ]
 
-RUN_OPTIONS = [
-        ('low', 'low', 'low'),
-        ('baseline', 'baseline', 'low'),
-        ('high', 'high', 'low'),
-        ('static2017', 'baseline', 'low'),
+if len(sys.argv) == 2 and sys.argv[1] == 'all':
+    print('USING ALL THE POSSIBLE COMBINATIONS')
+    RUN_OPTIONS = [
+            ('low', 'low', 'low'),
+            ('baseline', 'baseline', 'low'),
+            ('high', 'high', 'low'),
+            ('static2017', 'baseline', 'low'),
+    
+            ('low', 'low', 'baseline'),
+            ('baseline', 'baseline', 'baseline'),
+            ('high', 'high', 'baseline'),
+            ('static2017', 'baseline', 'baseline'),
+    
+            ('low', 'low', 'high'),
+            ('baseline', 'baseline', 'high'),
+            ('high', 'high', 'high'),
+            ('static2017', 'baseline', 'high')
+        ]
+else:
+    print('USING QUICK VERSION')
+    RUN_OPTIONS = [
+#        ('low', 'low', 'low'),
+#        ('baseline', 'baseline', 'low'),
+#        ('high', 'high', 'low'),
+#        ('static2017', 'baseline', 'low'),
+#
+#        ('low', 'low', 'baseline'),
+#        ('baseline', 'baseline', 'baseline'),
+#        ('high', 'high', 'baseline'),
+#        ('static2017', 'baseline', 'baseline'),
 
-        ('low', 'low', 'baseline'),
-        ('baseline', 'baseline', 'baseline'),
-        ('high', 'high', 'baseline'),
-        ('static2017', 'baseline', 'baseline'),
-
-        ('low', 'low', 'high'),
-        ('baseline', 'baseline', 'high'),
-        ('high', 'high', 'high'),
-        ('static2017', 'baseline', 'high')
+#        ('low', 'low', 'high'),
+#        ('baseline', 'baseline', 'high'),
+#        ('high', 'high', 'high'),
+        ('baseline', 'baseline', 'baseline', 'macrocell_700'),
+        ('baseline', 'baseline', 'baseline', 'macrocell_only_700'),
+        
     ]
 
 ################################################################
@@ -151,7 +170,7 @@ print('Loading regions')
 # 	},
 # ]
 lads = []
-LAD_FILENAME = os.path.join(BASE_PATH, 'initial_system', 'lads.csv')
+LAD_FILENAME = os.path.join(INPUT_FOLDER, 'initial_system', 'lads.csv')
 
 with open(LAD_FILENAME, 'r') as lad_file:
     reader = csv.reader(lad_file)
@@ -161,7 +180,24 @@ with open(LAD_FILENAME, 'r') as lad_file:
             "id": lad_id,
             "name": name
         })
+    
 
+ofcom_lads = []
+ofcom_380_to_174 = {}
+LAD_OFCOM_FILENAME = os.path.join(INPUT_FOLDER, 'ofcom_geography_conversion.csv')
+
+with open(LAD_OFCOM_FILENAME, 'r') as lad_file:
+    reader = csv.reader(lad_file)
+    next(reader)  # skip header
+    for name, oslaua, oscty, gor, code in reader:
+        ofcom_lads.append({
+            "lad_id": code,
+            "name": name
+        })
+        ofcom_380_to_174[oslaua] = code
+    
+    
+#print (repr(ofcom_lads))
 # Read in postcode sectors (without population)
 # pcd_sectors = [
 # 	{
@@ -172,7 +208,7 @@ with open(LAD_FILENAME, 'r') as lad_file:
 # 	},
 # ]
 pcd_sectors = []
-PCD_SECTOR_FILENAME = os.path.join(BASE_PATH, 'initial_system', 'pcd_sectors.csv')
+PCD_SECTOR_FILENAME = os.path.join(INPUT_FOLDER, 'initial_system', 'pcd_sectors.csv')
 with open(PCD_SECTOR_FILENAME, 'r') as pcd_sector_file:
     reader = csv.reader(pcd_sector_file)
     next(reader)  # skip header
@@ -180,7 +216,7 @@ with open(PCD_SECTOR_FILENAME, 'r') as pcd_sector_file:
         pcd_sectors.append({
             "id": pcd_sector.replace(" ", ""),
             "lad_id": lad_id,
-            "area": float(area)
+            "area": float(area) #area_sq_km
         })
 
 ################################################################
@@ -191,9 +227,11 @@ with open(PCD_SECTOR_FILENAME, 'r') as pcd_sector_file:
 print('Loading scenario data')
 
 scenario_files = {
-    scenario: os.path.join(BASE_PATH, 'scenario_data', 'population_{}_pcd.csv'.format(scenario))
+    scenario: os.path.join(INPUT_FOLDER, 'scenario_data', 'population_{}_pcd.csv'.format(scenario))
     for scenario in POPULATION_SCENARIOS
 }
+
+# POPULATION
 population_by_scenario_year_pcd = {
     scenario: {
         year: {} for year in TIMESTEPS
@@ -212,29 +250,52 @@ for scenario, filename in scenario_files.items():
             if year in TIMESTEPS:
                 population_by_scenario_year_pcd[scenario][year][pcd_sector] = int(population)
 
-# DEMAND
-user_throughput_by_scenario_year = {
+# DEMAND IN GB
+user_throughput_by_scenario_year_GB = {
     scenario: {} for scenario in THROUGHPUT_SCENARIOS
 }
-THROUGHPUT_FILENAME = os.path.join(BASE_PATH, 'scenario_data', 'monthly_data_growth_scenarios.csv')
-with open(THROUGHPUT_FILENAME, 'r') as throughput_file:
+THROUGHPUT_GB_FILENAME = os.path.join(INPUT_FOLDER, 'scenario_data', 'monthly_data_growth_scenarios.csv')
+with open(THROUGHPUT_GB_FILENAME, 'r') as throughput_file:
     reader = csv.reader(throughput_file)
     next(reader)  # skip header
     for year, low, base, high in reader:
         year = int(year)
         if "high" in THROUGHPUT_SCENARIOS:
-            user_throughput_by_scenario_year["high"][year] = float(high)
+            user_throughput_by_scenario_year_GB["high"][year] = float(high)
         if "baseline" in THROUGHPUT_SCENARIOS:
-            user_throughput_by_scenario_year["baseline"][year] = float(base)
+            user_throughput_by_scenario_year_GB["baseline"][year] = float(base)
         if "low" in THROUGHPUT_SCENARIOS:
-            user_throughput_by_scenario_year["low"][year] = float(low)
+            user_throughput_by_scenario_year_GB["low"][year] = float(low)
         if "static2017" in THROUGHPUT_SCENARIOS:
-            user_throughput_by_scenario_year["baseline"][year] = float(base)
+            user_throughput_by_scenario_year_GB["baseline"][year] = float(base)
+            
+            
+# DEMAND IN MBPS
+user_throughput_by_scenario_year_mbps = {
+    scenario: {} for scenario in THROUGHPUT_SCENARIOS
+}
+THROUGHPUT_SPEED_FILENAME = os.path.join(INPUT_FOLDER, 'scenario_data', 'monthly_speed_growth_scenarios.csv')
+with open(THROUGHPUT_SPEED_FILENAME, 'r') as throughput_file:
+    reader = csv.reader(throughput_file)
+    next(reader)  # skip header
+    for year, low, base, high in reader:
+        year = int(year)
+        if "high" in THROUGHPUT_SCENARIOS:
+            user_throughput_by_scenario_year_mbps["high"][year] = float(high)
+        if "baseline" in THROUGHPUT_SCENARIOS:
+            user_throughput_by_scenario_year_mbps["baseline"][year] = float(base)
+        if "low" in THROUGHPUT_SCENARIOS:
+            user_throughput_by_scenario_year_mbps["low"][year] = float(low)
+        if "static2017" in THROUGHPUT_SCENARIOS:
+            user_throughput_by_scenario_year_mbps["baseline"][year] = float(base)
 
+
+
+# COVERAGE OBLIGATION
 coverage_obligations_by_scenario_year = {
     scenario: {} for scenario in COVERAGE_OBLIGATION_SCENARIOS
 }
-COVERAGE_OBLIGATIONS_FILENAME = os.path.join(ALVAROS_FOLDER, 'scenario_data', 'per_year_coverage_obligations_scenarios.csv')
+COVERAGE_OBLIGATIONS_FILENAME = os.path.join(INPUT_FOLDER, 'scenario_data', 'per_year_coverage_obligations_scenarios.csv')
 with open(COVERAGE_OBLIGATIONS_FILENAME, 'r') as coverage_obligations_file:
     reader = csv.reader(coverage_obligations_file)
     next(reader)  # skip header
@@ -264,7 +325,7 @@ print('Loading initial system')
 #       'bandwidth': '2x10MHz',
 # 	}
 # ]
-SYSTEM_FILENAME = os.path.join(BASE_PATH, 'initial_system', 'initial_system_with_4G.csv')
+SYSTEM_FILENAME = os.path.join(INPUT_FOLDER, 'initial_system', 'initial_system_with_4G.csv')
 
 initial_system = []
 pcd_sector_ids = {pcd_sector["id"]: True for pcd_sector in pcd_sectors}
@@ -292,7 +353,7 @@ with open(SYSTEM_FILENAME, 'r') as system_file:
 ################################################################
 print('Loading lookup tables')
 
-CAPACITY_LOOKUP_FILENAME = os.path.join(BASE_PATH, 'lookup_tables', 'lookup_table_long.csv')
+CAPACITY_LOOKUP_FILENAME = os.path.join(INPUT_FOLDER, 'lookup_tables', 'lookup_table_long.csv')
 
 # create empty dictionary for capacity lookup
 capacity_lookup_table = {}
@@ -319,7 +380,7 @@ with open(CAPACITY_LOOKUP_FILENAME, 'r') as capacity_lookup_file:
         value_list.sort(key=lambda tup: tup[0])
 
 
-CLUTTER_GEOTYPE_FILENAME = os.path.join(BASE_PATH, 'lookup_tables', 'lookup_table_geotype.csv')
+CLUTTER_GEOTYPE_FILENAME = os.path.join(INPUT_FOLDER, 'lookup_tables', 'lookup_table_geotype.csv')
 
 # Create empty list for clutter geotype lookup
 clutter_lookup = []
@@ -335,123 +396,12 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
     # sort list by population density (first entry in each tuple)
     clutter_lookup.sort(key=lambda tup: tup[0])
 
-def write_lad_results(ict_manager, year, pop_scenario, throughput_scenario,
-                      intervention_strategy, cost_by_lad):
-    suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'metrics_{}.csv'.format(suffix))
-
-    if year == BASE_YEAR:
-        metrics_file = open(metrics_filename, 'w', newline='')
-        metrics_writer = csv.writer(metrics_file)
-        metrics_writer.writerow(
-            ('year', 'area_id', 'area_name', 'cost', 'demand', 'capacity', 'capacity_deficit', 'population', 'pop_density'))
-    else:
-        metrics_file = open(metrics_filename, 'a', newline='')
-        metrics_writer = csv.writer(metrics_file)
-
-    # output and report results for this timestep
-    for lad in ict_manager.lads.values():
-        # year,area,name,cost,demand,capacity,capacity_deficit,population,population_density
-        area_id = lad.id
-        area_name = lad.name
-        cost = cost_by_lad[lad.id]
-        demand = lad.demand()
-        capacity = lad.capacity()
-        capacity_deficit = capacity - demand
-        pop = lad.population
-        pop_d = lad.population_density
-
-        metrics_writer.writerow(
-            (year, area_id, area_name, cost, demand, capacity, capacity_deficit, pop, pop_d))
-
-    metrics_file.close()
-
-def write_pcd_results(ict_manager, year, pop_scenario, throughput_scenario,
-                      intervention_strategy, cost_by_pcd):
-    suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    metrics_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'pcd_metrics_{}.csv'.format(suffix))
-
-    if year == BASE_YEAR:
-        metrics_file = open(metrics_filename, 'w', newline='')
-        metrics_writer = csv.writer(metrics_file)
-        metrics_writer.writerow(
-            ('year', 'postcode', 'cost', 'demand', 'capacity', 'capacity_deficit', 'population', 'pop_density'))
-    else:
-        metrics_file = open(metrics_filename, 'a', newline='')
-        metrics_writer = csv.writer(metrics_file)
-
-    # output and report results for this timestep
-    for pcd in ict_manager.postcode_sectors.values():
-        # Output metrics
-        # year,postcode,demand,capacity,capacity_deficit
-        demand = pcd.demand
-        capacity = pcd.capacity
-        capacity_deficit = capacity - demand
-        pop = pcd.population
-        pop_d = pcd.population_density
-        cost = cost_by_pcd[pcd.id]
-
-        metrics_writer.writerow(
-            (year, pcd.id, cost, demand, capacity, capacity_deficit, pop, pop_d))
-
-    metrics_file.close()
-
-def write_decisions(decisions, year, pop_scenario, throughput_scenario, intervention_strategy):
-    suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    decisions_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'decisions_{}.csv'.format(suffix))
-
-    if year == BASE_YEAR:
-        decisions_file = open(decisions_filename, 'w', newline='')
-        decisions_writer = csv.writer(decisions_file)
-        decisions_writer.writerow(
-            ('year', 'pcd_sector', 'site_ngr', 'build_date', 'type', 'technology', 'frequency', 'bandwidth'))
-    else:
-        decisions_file = open(decisions_filename, 'a', newline='')
-        decisions_writer = csv.writer(decisions_file)
-
-    # output and report results for this timestep
-    for intervention in decisions:
-        # Output decisions
-        pcd_sector = intervention['pcd_sector']
-        site_ngr = intervention['site_ngr']
-        build_date = intervention['build_date']
-        intervention_type = intervention['type']
-        technology = intervention['technology']
-        frequency = intervention['frequency']
-        bandwidth = intervention['bandwidth']
-
-        decisions_writer.writerow(
-            (year, pcd_sector, site_ngr, build_date, intervention_type, technology, frequency, bandwidth))
-
-    decisions_file.close()
-
-def write_spend(spend, year, pop_scenario, throughput_scenario, intervention_strategy):
-    suffix = _get_suffix(pop_scenario, throughput_scenario, intervention_strategy)
-    spend_filename = os.path.join(OUTPUT_FOLDER, 'outputs', 'spend_{}.csv'.format(suffix))
-
-    if year == BASE_YEAR:
-        spend_file = open(spend_filename, 'w', newline='')
-        spend_writer = csv.writer(spend_file)
-        spend_writer.writerow(
-            ('year', 'pcd_sector', 'lad', 'item', 'cost', 'reason'))
-    else:
-        spend_file = open(spend_filename, 'a', newline='')
-        spend_writer = csv.writer(spend_file)
-
-    # output and report results for this timestep
-    for pcd_sector, lad, item, cost, reason in spend:
-        spend_writer.writerow(
-            (year, pcd_sector, lad, item, cost, reason))
-
-    spend_file.close()
-
-def _get_suffix(pop_scenario, throughput_scenario, intervention_strategy):
-    suffix = 'pop_{}_throughput_{}_coverage_{}'.format(
-        pop_scenario, throughput_scenario, intervention_strategy)
-    # for length, use 'base' for baseline scenarios
-    suffix = suffix.replace('baseline', 'base')
-    return suffix
-
+################################################################
+# INITIALIZE RESULT CLASS
+#
+################################################################
+results = Results()
+#results.prepare_to_print = PREPARE_TO_PRINT
 
 ################################################################
 # START RUNNING MODEL
@@ -459,14 +409,30 @@ def _get_suffix(pop_scenario, throughput_scenario, intervention_strategy):
 # - run over population scenario / demand scenario / intervention strategy combinations
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
-# coverage_vs_demand=[]
 
-for pop_scenario, throughput_scenario, coverage_scenario in RUN_OPTIONS:
+for pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy  in RUN_OPTIONS:
 
-    print("Running:", pop_scenario, throughput_scenario, coverage_scenario)
+    print("Running:", pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
     assets = initial_system[:]
-    intervention_strategy = "macrocell_700"
-
+#    intervention_strategy = "macrocell_700"
+    index = save_data._get_suffix(pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    
+    results.chart1_add_table(index)
+    results.chart2_add_table(index)
+    results.chart3_add_table(index)
+    
+    results.chart1_lads_add_table(index)
+    results.chart2_lads_add_table(index)
+    results.chart3_lads_add_table(index)
+    
+    chart1 = results.chart_1[index]
+    chart2 = results.chart_2[index]
+    chart3 = results.chart_3[index]
+    
+    chart1_lads = results.chart_1_lads[index]
+    chart2_lads = results.chart_2_lads[index]
+    chart3_lads = results.chart_3_lads[index]
+        
     for year in TIMESTEPS:
         print("-", year)
 
@@ -474,46 +440,65 @@ for pop_scenario, throughput_scenario, coverage_scenario in RUN_OPTIONS:
         for pcd_sector in pcd_sectors:
             pcd_sector_id = pcd_sector["id"]
             pcd_sector["population"] = population_by_scenario_year_pcd[pop_scenario][year][pcd_sector_id]
-            pcd_sector["user_throughput"] = 0
-            # pcd_sector["user_throughput"] = user_throughput_by_scenario_year[throughput_scenario][year]
+            pcd_sector["user_throughput_GB"] = user_throughput_by_scenario_year_GB[throughput_scenario][year]
+            pcd_sector["user_throughput_mbps"] = user_throughput_by_scenario_year_mbps['low'][year] # Fixed to 2Mbps
             
         # Decide on new interventions
         budget = ANNUAL_BUDGET
-        #service_obligation_capacity = coverage_obligations_by_scenario_year[coverage_scenario][year]
-        service_obligation_capacity = SERVICE_OBLIGATION_CAPACITY
-        # print('Coverage obligation : ' + repr(service_obligation_capacity))
+        service_obligation_capacity = coverage_obligations_by_scenario_year[coverage_scenario][year]
 
         # simulate first
         if year == BASE_YEAR:
-            system = ICTManager(lads, pcd_sectors, assets, capacity_lookup_table, clutter_lookup)
-
+            system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup)
+               
+            previous_pop1,previous_pop2,previous_pop3 = 0,0,0
+            for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
+                previous_pop1 = chart1.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, TIMESTEPS, previous_pop1)
+                previous_pop2 = chart2.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, previous_pop2)
+                previous_pop3 = chart3.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, TIMESTEPS, previous_pop3)
+            
+            previous_pop1,previous_pop2,previous_pop3 = 0,0,0
+            for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
+                previous_pop1 = chart1_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop1)
+                previous_pop2 = chart2_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, previous_pop2)
+                previous_pop3 = chart3_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop3)                
+               
         # decide
-        interventions_built, budget, spend = decide_interventions(intervention_strategy, budget, service_obligation_capacity, system, year)
+        interventions_built, budget, spend, results = decide_interventions(intervention_strategy, budget, service_obligation_capacity, system, year, results, index)
 
         # accumulate decisions
         assets += interventions_built
-
+               
         # simulate with decisions
-        system = ICTManager(lads, pcd_sectors, assets, capacity_lookup_table, clutter_lookup)
+        system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup)
+        
+        # Fill capacity margins per year
+        for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
+            chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin) # Capacity_margin
+            
+        # Fill capacity margins per year
+        for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
+            chart2_lads.add_cap_margin(lad.id, year, lad.capacity_margin) # Capacity_margin
 
         cost_by_lad = defaultdict(int)
         cost_by_pcd = defaultdict(int)
-        for pcd, lad, item, cost, reason in spend:
+
+        for pcd, lad, item, cost in spend:
             cost_by_lad[lad] += cost
             cost_by_pcd[pcd] += cost
-
-        #for pcd, 
-        # Group by pcd: demand, coverage, both or none
-        # Count PCDs for each year and type and give a percentage.
-        #coverage_vs_demand.append((area.id, area.lad_id, reason))
-
-        #test = []
-        #b = ['a','b','c','d','e']
-        #test.append(b)
-        #for a,b,c,d,e in test:
-        #    print(a)
-
-        write_decisions(interventions_built, year, pop_scenario, throughput_scenario, coverage_scenario)
-        write_spend(spend, year, pop_scenario, throughput_scenario, coverage_scenario)
-        write_lad_results(system, year, pop_scenario, throughput_scenario, coverage_scenario, cost_by_lad)
-        write_pcd_results(system, year, pop_scenario, throughput_scenario, coverage_scenario, cost_by_pcd)
+            
+        save_data.write_decisions(interventions_built, year, BASE_YEAR, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, OUTPUT_FOLDER)
+        save_data.write_spend(spend, year, BASE_YEAR, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, OUTPUT_FOLDER)
+        save_data.write_lad_results(system, year, BASE_YEAR, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, cost_by_lad,  OUTPUT_FOLDER)
+        save_data.write_pcd_results(system, year, BASE_YEAR, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, cost_by_pcd, OUTPUT_FOLDER)
+        
+    save_data.write_chart_1(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_2(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_3(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    
+    save_data.write_chart_1_LADs(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_2_LADs(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_3_LADs(system, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+        
+# print('W93 => ' + repr(results.chart_1['pop_static2017_throughput_base_coverage_high'].get_value('W93')))
+#print('Number of keys ' + repr(results.chart_1['pop_static2017_throughput_base_coverage_high'].count_keys()))    
