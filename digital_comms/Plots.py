@@ -1,174 +1,209 @@
 """
 PLOT FUNCTION
 """
-
 import numpy as np
 import matplotlib.pyplot as plt
-#import time
-#import matplotlib.colors as colors
-#from matplotlib.figure import Figure
+import matplotlib.ticker as mtick
 import os
-#from itertools import accumulate
 
-
-def plot_chart(chart, title, columns, output_path, name, index):
-    
-#    Based on: https://matplotlib.org/gallery/statistics/barchart_demo.html
-    metrics_filename = os.path.join(output_path, 'figures', name + '_' + index)
-    
-    fig, ax = plt.subplots()
-    
-    ax.set_xlabel('LADs')
-    ax.set_ylabel('Population')
-    ax.set_title(title)
-    
-    x_values = [value[0] for key,value in chart._table.items()]
-    y_values = [value[columns[1]] for key,value in chart._table.items()]
-    
-    step_100_y = max([value[columns[0]] for key,value in chart._table.items()])
-        
-    step_25_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 1 / 4)][0]
-    step_50_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 2 / 4)][0]
-    step_75_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 3 / 4)][0]    
-    
-    ax.title.set_text(title)
-    bar_width = 1/1.5
-    opacity = 1
-
-    ax.bar(np.arange(len(x_values)), y_values,alpha=opacity, color='b', linewidth=1/3)
-    
-    ax.annotate('25%', xy=(list(chart._table.keys()).index(step_25_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_25_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),) #, shrink=0.05
-    ax.annotate('50%', xy=(list(chart._table.keys()).index(step_50_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_50_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-    ax.annotate('75%', xy=(list(chart._table.keys()).index(step_75_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_75_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-
-    ax.set_xticklabels(x_values)
-#    fig.tight_layout()
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-#    fig.subplots_adjust(top=0.85)
-    
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
-    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    
-#    plt.show()    
-    plt.close(fig)
-    
-    
-    
-def plot_chart_comparison(chart, title, subtitles, columns, output_path, name, index):
-    
-#    Based on: https://matplotlib.org/gallery/statistics/barchart_demo.html
-    metrics_filename = os.path.join(output_path, 'figures', name + '_' + index)
+def plot_chart(ict_manager, results, chart, col_pop, col_pop_agg, col_value, col_value_agg, title, ax_names, name, index):
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
     
     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
     fig.suptitle(title)
-    axlist = [fig.add_subplot(len(columns)-1,1,i+1) for i in range(len(columns)-1)]
+    ax = fig.subplots()
+    ax.set_xlabel(ax_names[0])
+    ax.set_ylabel(ax_names[1])
+    
+    if(True): 
+        x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
+        ax.plot(x_values, y_values)
+    else:
+        x_values = [value[0] for key,value in chart._table.items()]
+        y_values = [value[col_value_agg] for key,value in chart._table.items()]
+        ax.plot(np.arange(len(x_values)), y_values)
+        ax.set_xticklabels(x_values)
+
+    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+    xticks = mtick.FormatStrFormatter(fmt)
+    ax.xaxis.set_major_formatter(xticks)
+    
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+    
+#    plt.show()    
+    plt.close(fig)
+
+    
+def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, ax_names, name, index):
+    
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
+    
+    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+    fig.suptitle(title)
+    axlist = [fig.add_subplot(len(columns),1,i+1) for i in range(len(columns))]
         
-    step_100_y = max([value[columns[0]] for key,value in chart._table.items()]) #
-        
-    step_25_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 1 / 4)][0]
-    step_50_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 2 / 4)][0]
-    step_75_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 3 / 4)][0]
+    # TODO: Modify X axis values to fit population increment  
     
     column_number = 0
-    for column in columns[1:]:
+    for column in columns:
         ax = axlist[column_number]
 
-        x_values = [value[0] for key,value in chart._table.items()]
+        x_elements = [value[0] for key,value in chart._table.items()]
         y_values = [value[column] for key,value in chart._table.items()]
+        x_values = np.linspace(0,100,len(x_elements))
         
-        ax.set_xlabel(subtitles[0])
-        ax.set_ylabel(subtitles[column_number + 1])
+        ax.set_xlabel(ax_names[0])
+        ax.set_ylabel(ax_names[column_number + 1])
         
-        bar_width = 1/1.5
-        opacity = 1
-        
-        ax.plot(np.arange(len(x_values)), y_values,alpha=opacity, color='b', linewidth=1/3)
-        
-        if column == 6 or column == 7: #Aggregated cost and population
-    
-            ax.annotate('25%', xy=(list(chart._table.keys()).index(step_25_x), chart.get_value(step_25_x)[column]), xytext=(list(chart._table.keys()).index(step_25_x), chart.get_value(step_25_x)[column] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('50%', xy=(list(chart._table.keys()).index(step_50_x), chart.get_value(step_50_x)[column]), xytext=(list(chart._table.keys()).index(step_50_x), chart.get_value(step_50_x)[column] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('75%', xy=(list(chart._table.keys()).index(step_75_x), chart.get_value(step_75_x)[column]), xytext=(list(chart._table.keys()).index(step_75_x), chart.get_value(step_75_x)[column] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-        
-        else:   
-            ax.annotate('25%', xy=(list(chart._table.keys()).index(step_25_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_25_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('50%', xy=(list(chart._table.keys()).index(step_50_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_50_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('75%', xy=(list(chart._table.keys()).index(step_75_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_75_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-        
-        ax.set_xticklabels(x_values)
+        ax.plot(x_values, y_values, color='b', linewidth=1/3)
+
+#        ax.set_xticklabels(x_values)
         column_number += 1
+        
+    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+    xticks = mtick.FormatStrFormatter(fmt)
+    ax.xaxis.set_major_formatter(xticks) 
     
-#    fig.tight_layout()
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-#    fig.subplots_adjust(top=0.85)
     
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
     
 #    plt.show()    
     plt.close(fig)
     
-    
-def plot_chart_per_year(chart, title, columns, timesteps, output_path, name, index):
-#    start_time = time.time()
-#    Based on: https://matplotlib.org/gallery/statistics/barchart_demo.html
-    metrics_filename = os.path.join(output_path, 'figures', name + '_' + index)
+def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps, title, ax_names, name, index):
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
     
     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
     fig.suptitle(title)
     axlist = [fig.add_subplot(6,2,i+1) for i in range(len(timesteps))]
-    
-    titles = ['LADs', 'Population', 'Cost']
-    
-    step_100_y = max([value[columns[0]] for key,value in chart._table.items()]) #
         
-    step_25_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 1 / 4)][0]
-    step_50_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 2 / 4)][0]
-    step_75_x = [key for key,value in chart._table.items() if value[columns[0]] > (step_100_y * 3 / 4)][0]
-#    
-#    time2 = time.time()
-#    print (str(time2 - start_time))
-    
-    x_values = [value[0] for key,value in chart._table.items()]
-    x_numbers = np.arange(len(x_values))
-
     column_number = 0
     for year in timesteps:
-#        time2 = time.time()
-#        print ("1: " + str(time2))
         ax = axlist[year-timesteps[0]]
 
-        y_values = [value[columns[1]][year] for key,value in chart._table.items()]
+        y_values = [value[columns[0]][year] for key,value in chart._table.items()]
         
-        ax.set_xlabel(titles[0])
+        ax.set_xlabel(ax_names[0])
         ax.set_ylabel(str(year))
+        
+        x_elements = [value[0] for key,value in chart._table.items()]  
+        x_values = np.linspace(0,100,len(x_elements))
                 
-#        time3 = time.time()
-#        print ("2: " + str(time3 - time2))
-        ax.plot(x_numbers, y_values, color='b', linewidth=1/3)
-#        time4 = time.time()
-#        print ("3: " + str(time4 - time3))
-        if columns[1] == 6 or columns[1] == 7: #Aggregated cost and population
-    
-            ax.annotate('25%', xy=(list(chart._table.keys()).index(step_25_x), chart.get_value(step_25_x)[columns[1]][year]), xytext=(list(chart._table.keys()).index(step_25_x), chart.get_value(step_25_x)[columns[1]][year] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('50%', xy=(list(chart._table.keys()).index(step_50_x), chart.get_value(step_50_x)[columns[1]][year]), xytext=(list(chart._table.keys()).index(step_50_x), chart.get_value(step_50_x)[columns[1]][year] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('75%', xy=(list(chart._table.keys()).index(step_75_x), chart.get_value(step_75_x)[columns[1]][year]), xytext=(list(chart._table.keys()).index(step_75_x), chart.get_value(step_75_x)[columns[1]][year] + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-        
-        else:   
-            ax.annotate('25%', xy=(list(chart._table.keys()).index(step_25_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_25_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('50%', xy=(list(chart._table.keys()).index(step_50_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_50_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-            ax.annotate('75%', xy=(list(chart._table.keys()).index(step_75_x), max(y_values)/2), xytext=(list(chart._table.keys()).index(step_75_x), max(y_values)/2 + max(y_values)/10),arrowprops=dict(facecolor='black', arrowstyle="->"),)
-        
-        ax.set_xticklabels(x_values)
+        ax.plot(x_values, y_values, color='b', linewidth=1/3)
+
+#        ax.set_xticklabels(x_values)
         column_number += 1
     
-#    fig.tight_layout()
-    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
-#    fig.subplots_adjust(top=0.85)
+    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+    xticks = mtick.FormatStrFormatter(fmt)
+    ax.xaxis.set_major_formatter(xticks)
     
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+    
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg')
     
 #    plt.show()    
     plt.close(fig)
+    
+    
+def plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, table_name, col_pop, col_pop_agg, col_value, col_value_agg, title, ax_names, name):
+    metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
+    
+    # Set Axis and Title
+    fig = plt.figure()
+    ax = plt.subplot(111)
+    
+    ax.set_xlabel(ax_names[0])
+    ax.set_ylabel(ax_names[1])
+    ax.set_title(title)
+    
+    # Create the X axis according to the population of the first option
+    if(table_name == 'chart1_pcd'):
+        chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
+    elif (table_name == 'chart1_lad'):
+        chart = results.chart1_lads_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
+    else:
+        chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
+        
+#    x_values = [value[0] for key,value in chart._table.items()]  
+#    x_numbers = np.linspace(0,100,len(x_values))
 
+    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+        if(table_name == 'chart1_pcd'):
+            chart = results.chart1_get_table(index)
+        elif (table_name == 'chart1_lad'):
+            chart = results.chart1_lads_get_table(index)
+        else:
+            chart = results.chart1_get_table(index)
+        
+#        y_values = [value[7] for key,value in chart._table.items()]
+        
+        x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
+
+        ax.plot(x_values, y_values, label=nice_index)
+        
+    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+    xticks = mtick.FormatStrFormatter(fmt)
+    ax.xaxis.set_major_formatter(xticks)
+#    fig.tight_layout()
+#    fig.tight_layout(rect=[0, 0.03, 1, 0.95])
+#    fig.subplots_adjust(top=0.85)
+    
+    # Shrink current axis's height by 50% on the bottom
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.5, box.width, box.height * 0.5])
+    
+#    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
+           handletextpad=0.0, fancybox=True, shadow=True, fontsize='small')
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+    
+#    plt.show()    
+    plt.close(fig)
+
+
+def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg, results, chart):
+    x_values = np.linspace(0,100,plot_points)
+    y_limits = np.linspace(0,results.population_2020,plot_points)
+    y_values = [] # La lista que voy a rellenar con los puntos Y. Tendrá la misma dimensión que y_limits
+    
+    for pop_limit in y_limits: # Relleno y_values buscando en los límites uno a uno.
+        previous_item = None # Cuando me pase en la comparación de población miro el anterior pcd porque ese es el que me interesará.
+        for key, value in chart._table.items(): # Miro a ver qué pcd se pasa para coger el anterior
+            if value[col_pop_agg] >= pop_limit: # Si con este pcd supero un límite, cojo el pcd anterior(previoues_pcd)
+                if previous_item == None:
+                    pop_to_limit = pop_limit # Como el primer límite se cumple en el primer pcd, solo hay que coger el limite de población
+                    cost = value[col_value] * pop_to_limit / value[col_pop] # %población para llegar al límite por el costePCD [5]
+                    y_values.append(cost)
+                    break # Solo relleno un y_value cada vez que recorro los pcds. Cuando lo tenga vuelvo a empezar
+                else:
+                    pop_to_limit = pop_limit - previous_item[col_pop_agg] # Diferencia de población entre el límite y todos los pcd anteriores
+                    cost = previous_item[col_value_agg] + value[col_value] * pop_to_limit / value[col_pop] # Agregado[7] del anterior + %población para llegar al límite * costePCD[5]
+                    y_values.append(cost)
+                    break # Solo relleno un y_value cada vez que recorro los pcds. Cuando lo tenga vuelvo a empezar
+            previous_item = value
+    return x_values, y_values
+
+
+# This function is copied in plot.py so when something is modified, it has to be modified there.
+def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy):
+    suffix = '{}_pop_{}_throughput_{}_coverage_{}_strategy_{}_'.format(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    # for length, use 'base' for baseline scenarios
+    suffix = suffix.replace('baseline', 'base')
+    return suffix
+
+def _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy):
+    suffix = '{}, Pop: {}, Throughput: {}, C.O.: {}, Strategy: {}'.format(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    # for length, use 'base' for baseline scenarios
+    suffix = suffix.replace('baseline', 'medium')
+    return suffix
+    

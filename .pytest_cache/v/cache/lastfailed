@@ -1,0 +1,5 @@
+{
+  "tests/test_ccam.py::TestICTManager::()::test_create": true,
+  "tests/test_ccam.py::TestLAD::()::test_create": true,
+  "tests/test_ccam.py::TestLAD::()::test_property_population": true
+}

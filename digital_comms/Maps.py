@@ -14,9 +14,6 @@ All the color palettes:
     
 This is another way of doing it:
     http://basemaptutorial.readthedocs.io/en/latest/shapefile.html
-    
-Multiple figures on pdf:
-    https://matplotlib.org/faq/howto_faq.html#save-multiple-plots-to-one-pdf-file
 """
 import shapefile
 import numpy as np
@@ -24,10 +21,19 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 #from matplotlib.figure import Figure
 import os
+import collections
 
-def print_map(chart, title, column, output_path, name, index):
+
+def print_map(chart, title, column, results, name, index, colormap):
     sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')   
-    metrics_filename = os.path.join(output_path, 'maps', name + '_' + index)
+    metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
+    
+#    print(repr(chart._table.keys()))
+    if not results.co_descending_order:
+        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
+    else:
+        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
     
     fig = plt.figure()        
     ax = fig.add_subplot(1,1,1)
@@ -38,7 +44,7 @@ def print_map(chart, title, column, output_path, name, index):
     ax.get_yaxis().set_visible(False)
     
     # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-    palette = plt.get_cmap('autumn') #Add _r at the end to get the inverse color map
+    palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map (autumn)
         
     # Get max and min value for the color map:
     max_value = max([i[column] for i in chart.table.values()])
@@ -55,15 +61,22 @@ def print_map(chart, title, column, output_path, name, index):
     # fake up the array of the scalar mappable. Urgh...
     sm._A = []
     fig.colorbar(sm) # colorbar(sm, orientation= 'horizontal')
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
 #    plt.show()    
     plt.close(fig)
     
-def print_map_year_all(chart, title, column, timesteps, output_path, name, index):
+def print_map_year_all(chart, title, column, timesteps, results, name, index, colormap):
 
     sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')
-    metrics_filename = os.path.join(output_path, 'maps', name + '_' + index)
+    metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
+    
+#    print(repr(chart._table.keys()))
+#    if not results.co_descending_order:
+#        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
+#    else:
+#        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
     
 #    fig, ((ax1,ax2,ax3,ax4),(ax5,ax6,ax7,ax8),(ax9,ax10,ax11,ax12)) = plt.subplots(nrows=3, ncols=4)
 #    axlist = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12]
@@ -85,7 +98,7 @@ def print_map_year_all(chart, title, column, timesteps, output_path, name, index
         ax.get_yaxis().set_visible(False)
         
         # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-        palette = plt.get_cmap('autumn') #Add _r at the end to get the inverse color map
+        palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
         norm = colors.Normalize(vmin=min_value, vmax=max_value) 
         
         for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information)     
@@ -101,18 +114,83 @@ def print_map_year_all(chart, title, column, timesteps, output_path, name, index
     sm._A = []
     fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
         
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+#    plt.show()
+    plt.close(fig)
+    
+    
+def print_map_year_all_positive_skipped(chart, title, column, timesteps, results, name, index, colormap):
+
+    sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')
+    metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
+
+#    print(repr(chart._table.keys()))
+#    if not results.co_descending_order:
+#        chart = collections.OrderedDict(reversed(list(chart._table.items())))
+#    else:
+#        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
+        
+        
+#    fig, ((ax1,ax2,ax3,ax4),(ax5,ax6,ax7,ax8),(ax9,ax10,ax11,ax12)) = plt.subplots(nrows=3, ncols=4)
+#    axlist = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12]
+
+    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+    axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
+    
+    # Get max and min value for the color map:
+#    max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
+    max_value = 0
+    min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
+        
+    for year in timesteps:
+        ax = axlist[year-2020]
+        
+        fig.suptitle(title, fontsize=16)
+        ax.set_aspect('equal')
+        ax.title.set_text(str(year))
+        ax.get_xaxis().set_visible(False)
+        ax.get_yaxis().set_visible(False)
+        
+        # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
+        palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
+        norm = colors.Normalize(vmin=min_value, vmax=max_value) 
+        
+        for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information)    
+            color = palette(norm(chart.get_value(sr.record[0])[column][year]))
+            if(chart.get_value(sr.record[0])[column][year] >= 0):
+                color = 'w'
+            _paint_region(ax, sr.shape ,color)
+
+    fig.subplots_adjust(wspace=0, hspace=0.200)
+    axlist[11].axis('off')
+    #    Colorbar is coded based on this link: https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots
+    #    Colorbar API: https://matplotlib.org/api/colorbar_api.html
+    sm = plt.cm.ScalarMappable(cmap=palette, norm=plt.Normalize(vmin=min_value, vmax=max_value))
+    # fake up the array of the scalar mappable. Urgh...
+    sm._A = []
+    fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
+        
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
 #    plt.show()
     plt.close(fig)
 
 
-def print_map_per_year(chart, title, column, timesteps, output_path, name, index):
+def print_map_per_year(chart, title, column, timesteps, results, name, index, colormap):
 
     sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')
-    
+
+#    print(repr(chart._table.keys()))
+#    if not results.co_descending_order:
+#        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
+#    else:
+#        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
+        
     for year in timesteps: 
-        metrics_filename = os.path.join(output_path, 'maps/detail_per_year', name + '_' + str(year) + '_' + index)
+        metrics_filename = os.path.join(results.output_path, 'maps/detail_per_year', name + '_' + str(year) + '_' + index)
     
         fig = plt.figure()        
         ax = fig.add_subplot(1,1,1)   
@@ -122,7 +200,7 @@ def print_map_per_year(chart, title, column, timesteps, output_path, name, index
         ax.get_yaxis().set_visible(False)
         
         # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-        palette = plt.get_cmap('autumn') #Add _r at the end to get the inverse color map
+        palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
             
         # Get max and min value for the color map:
         max_value = max([i[column][year] for i in chart.table.values()])
@@ -139,17 +217,25 @@ def print_map_per_year(chart, title, column, timesteps, output_path, name, index
         # fake up the array of the scalar mappable. Urgh...
         sm._A = []
         fig.colorbar(sm) # colorbar(sm, orientation= 'horizontal')
-        fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#        fig.savefig(metrics_filename + '.pdf', dpi=1000)
         fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
 #        plt.show()
         plt.close(fig)
+        
 
-def print_tech_map_aggregated(chart, title, columns, output_path, name, index):
+def print_tech_map_aggregated(chart, title, columns, results, name, index, colormap):
 
     sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')
-    metrics_filename = os.path.join(output_path, 'maps', name + '_' + index)
+    metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
     titles = ['LTE','700 MHz']
-    
+
+#    print(repr(chart._table.keys()))
+#    if not results.co_descending_order:
+#        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
+#    else:
+#        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
+        
     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
     fig.suptitle(title, fontsize=16)
     axlist = [fig.add_subplot(1,len(columns),i+1) for i in range(len(columns))]
@@ -171,7 +257,7 @@ def print_tech_map_aggregated(chart, title, columns, output_path, name, index):
         ax.get_yaxis().set_visible(False)
         
         # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-        palette = plt.get_cmap('autumn') #Add _r at the end to get the inverse color map
+        palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
         norm = colors.Normalize(vmin=min_value, vmax=max_value)
             
         for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information) 
@@ -187,17 +273,24 @@ def print_tech_map_aggregated(chart, title, columns, output_path, name, index):
     sm._A = []
     fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
 
-    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
 #    plt.show()
     plt.close(fig)
 
-def print_tech_map_per_year(chart, title, columns, timesteps, output_path, name, index):
+def print_tech_map_per_year(chart, title, columns, timesteps, results, name, index, colormap):
 
     sf = shapefile.Reader('D:\Dropbox\Digital Comms - Mobile\Visualisation\LAD Shapes\LAD_shapes')
-    
+
+#    print(repr(chart._table.keys()))
+#    if not results.co_descending_order:
+#        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
+#    else:
+#        chart._table = chart._table
+#    print(repr(results.co_descending_order) + repr(chart.keys()))
+        
     for year in timesteps: 
-        metrics_filename = os.path.join(output_path, 'maps/detail_per_year', name + '_' + str(year) + '_' + index)
+        metrics_filename = os.path.join(results.output_path, 'maps/detail_per_year', name + '_' + str(year) + '_' + index)
         titles = ['LTE', '700 MHz']
         
         fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
@@ -220,7 +313,7 @@ def print_tech_map_per_year(chart, title, columns, timesteps, output_path, name,
             ax.get_yaxis().set_visible(False)
             
             # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-            palette = plt.get_cmap('autumn') #Add _r at the end to get the inverse color map
+            palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
             norm = colors.Normalize(vmin=min_value, vmax=max_value)
                 
             for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information) 
@@ -235,7 +328,7 @@ def print_tech_map_per_year(chart, title, columns, timesteps, output_path, name,
         sm._A = []
         fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
 
-        fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#        fig.savefig(metrics_filename + '.pdf', dpi=1000)
         fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
 #        plt.show()
         plt.close(fig)

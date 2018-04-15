@@ -6,8 +6,6 @@ from pprint import pprint
 
 PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR = 0.15
 
-SERVICE_OBLIGATION_CAPACITY = 10
-
 class ICTManager(object):
     """Model controller class.
 
@@ -79,7 +77,7 @@ class ICTManager(object):
             TODO
     """
 
-    def __init__(self, lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup):
+    def __init__(self, lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity):
         """ Load the `lads` in local :obj:`dict` attribute `lad`
         Record the assets, capacity and clutter per postcode sector in the :obj:`dict` attribute `postcode_sectors`
         """
@@ -92,20 +90,25 @@ class ICTManager(object):
 
         # List of all postcode sectors
         self.postcode_sectors = {}
+        
+        # Population per country
+        self.pop_per_country = {'E': 0, 'S': 0, 'W': 0}
+        self.population = 0
+        self.service_obligation_capacity = service_obligation_capacity
 
         # lad_data in lads <-'lads' is the list of dicts of lad data
         for lad_data in lads:
             # find ID out of lads list of dicts
             lad_id = lad_data["id"]
             # create LAD object using lad_data and put in self.lads dict
-            self.lads[lad_id] = LAD(lad_data)
+            self.lads[lad_id] = LAD(lad_data, service_obligation_capacity)
             
         # lad_data in lads <-'lads' is the list of dicts of lad data
         for lad_data in ofcom_lads:
             # find ID out of lads list of dicts
             lad_id = lad_data["lad_id"]
             # create LAD object using lad_data and put in self.lads dict
-            self.ofcom_lads[lad_id] = LAD_OFCOM(lad_data)
+            self.ofcom_lads[lad_id] = LAD_OFCOM(lad_data, service_obligation_capacity)
 
         assets_by_pcd = defaultdict(list)
         for asset in assets:
@@ -116,10 +119,12 @@ class ICTManager(object):
             ofcom_lad_id = ofcom_380_to_174[lad_id]
             pcd_sector_id = pcd_sector_data["id"]
             assets = assets_by_pcd[pcd_sector_id]
-            pcd_sector = PostcodeSector(pcd_sector_data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup)
+            pcd_sector = PostcodeSector(pcd_sector_data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity)
 
             # add PostcodeSector to simple list
             self.postcode_sectors[pcd_sector_id] = pcd_sector
+            self.pop_per_country[lad_id[0]] += pcd_sector_data["population"]
+            self.population += pcd_sector_data["population"]
             
             # add PostcodeSector to LAD
             lad_containing_pcd_sector = self.lads[lad_id]
@@ -128,6 +133,22 @@ class ICTManager(object):
             # add PostcodeSector to LAD_OFCOM
             lad_containing_pcd_sector = self.ofcom_lads[ofcom_380_to_174[lad_id]]
             lad_containing_pcd_sector.add_pcd_sector(pcd_sector)
+#        print ("E = {}, S = {}, W = {}".format(self.pop_per_country['E'],self.pop_per_country['S'],self.pop_per_country['W']))
+
+            
+    def coverage_obligation_satisfied(self, pcd):
+        country_initial_letter = pcd.lad_id[0]
+        
+        population_with_coverage = sum([pcd_sector.population for pcd_sector in self.postcode_sectors.values() if pcd_sector.lad_id[0] == country_initial_letter if pcd_sector.capacity >= pcd_sector.threshold_demand]) # self.service_obligation_capacity * pcd_sector.population_density
+#        total_pop = sum([pcd_sector.population for pcd_sector in self.postcode_sectors.values() if pcd_sector.lad_id[0] == country_initial_letter])
+        total_pop = self.pop_per_country[country_initial_letter]
+        
+        ratio = float(population_with_coverage) / total_pop
+        
+#        print ("Letter = {}, PCD = {}, Pop_covered = {},  Total_pop = {}, Ratio = {}".format(country_initial_letter, pcd.id, population_with_coverage, total_pop, ratio))
+
+        return ratio
+        
 
 class LAD(object):
     """Local area district. 
@@ -145,10 +166,11 @@ class LAD(object):
         * name: :obj:`str`
             Name of the LAD
     """
-    def __init__(self, data):
+    def __init__(self, data, service_obligation_capacity):
         self.id = data["id"]
         self.name = data["name"]
         self._pcd_sectors = {}
+        self.service_obligation_capacity = service_obligation_capacity
 
     def __repr__(self):
         return "<LAD id:{} name:{}>".format(self.id, self.name)
@@ -278,18 +300,18 @@ class LAD(object):
         population_with_coverage = sum([
             pcd_sector.population
             for pcd_sector in self._pcd_sectors.values()
-            if pcd_sector.capacity >= SERVICE_OBLIGATION_CAPACITY])
+            if pcd_sector.capacity >= pcd_sector.threshold_demand]) # self.service_obligation_capacity * pcd_sector.population_density
         total_pop = sum([
             pcd_sector.population
             for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
     
-    @property
-    def capacity_margin(self):
-        """obj: Capacity margin per postcode sector in Mbps
-        """
-        capacity_margin = self.capacity - self.demand
-        return capacity_margin
+#    @property
+#    def capacity_margin(self):
+#        """obj: Capacity margin per postcode sector in Mbps
+#        """
+#        capacity_margin = self.capacity - self.demand
+#        return capacity_margin
     
     
 class LAD_OFCOM(object):
@@ -308,10 +330,11 @@ class LAD_OFCOM(object):
         * name: :obj:`str`
             Name of the LAD
     """
-    def __init__(self, data):
+    def __init__(self, data, service_obligation_capacity):
         self.id = data["lad_id"]
         self.name = data["name"]
         self._pcd_sectors = {}
+        self.service_obligation_capacity = service_obligation_capacity
 
     def __repr__(self):
         return "<LAD id:{} name:{}>".format(self.id, self.name)
@@ -440,27 +463,29 @@ class LAD_OFCOM(object):
         if not self._pcd_sectors:
             return 0
 
-        population_with_coverage = sum([
-            pcd_sector.population
-            for pcd_sector in self._pcd_sectors.values()
-            if pcd_sector.capacity >= SERVICE_OBLIGATION_CAPACITY])
-        total_pop = sum([
-            pcd_sector.population
-            for pcd_sector in self._pcd_sectors.values()])
+        population_with_coverage = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values() if pcd_sector.capacity >= pcd_sector.threshold_demand])
+        total_pop = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
     
     @property
     def capacity_margin(self):
         """obj: Capacity margin per postcode sector in Mbps
         """
-        capacity_margin = self.capacity - self.demand
+        if not self._pcd_sectors:
+            return 0
+
+        capacity_lad = sum([ (pcd_sector.population * pcd_sector.capacity) for pcd_sector in self._pcd_sectors.values()]) #TODO: Comprobar si tengo que multiplicar por pop o pop_density
+        demand_lad = sum([ (pcd_sector.population * pcd_sector.demand) for pcd_sector in self._pcd_sectors.values()])
+        total_pop = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values()])
+        
+        capacity_margin = (capacity_lad - demand_lad) / total_pop
         return capacity_margin
 
 
 class PostcodeSector(object):
     """Represents a Postcode sector to be modelled
     """
-    def __init__(self, data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup):
+    def __init__(self, data, ofcom_lad_id, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity):
         self.id = data["id"]
         self.lad_id = data["lad_id"]
         self.ofcom_lad_id = ofcom_lad_id
@@ -475,6 +500,7 @@ class PostcodeSector(object):
 
         self._capacity_lookup_table = capacity_lookup_table
         self._clutter_lookup = clutter_lookup
+        self.service_obligation_capacity = service_obligation_capacity
 
         self.clutter_environment = lookup_clutter_geotype(
             self._clutter_lookup,
@@ -483,10 +509,11 @@ class PostcodeSector(object):
 
         # TODO: replace hard-coded parameter
         self.penetration = 0.8
+        self.market_share = 0.3
 
         # Keep list of assets
         self.assets = assets
-        self.capacity = self._macrocell_site_capacity() + self._small_cell_capacity()
+        self.capacity = self._macrocell_site_capacity() + self._small_cell_capacity() #Capacity per km^2
 
     def __repr__(self):
         return "<PostcodeSector id:{}>".format(self.id)
@@ -507,8 +534,9 @@ class PostcodeSector(object):
         """
         return user_throughput * 1024 * 8 * PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR / 30 / 3600 ### i have removed market share and place in def demand below
         #return user_throughput / 20 # assume we want to give X Mbps per second, with an OBF of  20
-
-    def threshold_demand(self, SERVICE_OBLIGATION_CAPACITY):
+    
+    @property
+    def threshold_demand(self):
         """Calculate capacity required to meet a service obligation.
 
         Parameters
@@ -534,7 +562,7 @@ class PostcodeSector(object):
             = ~4.8 Mbps/km^2
         """
         ### MARKET SHARE? ###
-        threshold_demand = self.population * self.penetration * SERVICE_OBLIGATION_CAPACITY / self.area ##Do we not need to put market share in here?
+        threshold_demand = self.population * self.penetration * self.market_share * self.service_obligation_capacity / (20 * self.area)
         return threshold_demand
 
     @property
@@ -570,13 +598,14 @@ class PostcodeSector(object):
 
     def _macrocell_site_capacity(self):
         capacity = 0
-
         for frequency in ['800', '2600', '700', '3500']:
             # count sites with this frequency/bandwidth combination
             num_sites = 0
             for asset in self.assets:
                 if asset['frequency'] == frequency:
                     num_sites += 1
+                    
+#            num_sites = len([asset for asset in self.assets if asset['frequency'] == frequency])
 
             # sites/km^2 : divide num_sites/area
             site_density = float(num_sites) / self.area

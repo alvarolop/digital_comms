@@ -4,20 +4,12 @@
 from digital_comms.ccam import PostcodeSector
 
 import copy
-import math
-#import collections
+import pprint
 
 ################################################################
 # EXAMPLE COST LOOKUP TABLE
 # - TODO come back to net present value or total cost of ownership for costs
 ################################################################
-
-# budget_limit. If true limit depending of the GBP
-BUDGET_LIMIT = True
-
-# Coverage obligations apply only to towns smaller than POPULATION_LIMIT inhabitants
-POPULATION_LIMIT_BOOL = False
-POPULATION_LIMIT_NUMBER = 5001
 
 # Postcode-sector level individual interventions
 INTERVENTIONS = {
@@ -67,6 +59,24 @@ INTERVENTIONS = {
             },
         ]
     },
+    'new_site_carrier_700': {
+        'name': 'Build 700 MHz carrier',
+        'description': 'Deployment of a new BS with 700MHz',
+        'result': '700 band available',
+        'cost': 142446,
+        'assets_to_build': [
+            {
+                # site_ngr to match upgraded
+                'site_ngr': None,
+                'frequency': '700',
+                'technology': 'LTE',
+                'type': 'macrocell_site',
+                'bandwidth': '2x10MHz',
+                # set build date when deciding
+                'build_date': None,
+            },
+        ]
+    },
     'carrier_3500': {
         'name': 'Build 3500 MHz carrier',
         'description': 'Available if a site has LTE',
@@ -102,25 +112,7 @@ INTERVENTIONS = {
                 'build_date': None,
             },
         ]
-    },
-#    'cell_700': {
-#        'name': 'Build a cell for 700 MHz',
-#        'description': 'Must be deployed at preset densities to be modelled',
-#        'result': '700 band available',
-#        'cost': 50917,
-#        'assets_to_build': [
-#            {
-#                # site_ngr not used
-#                'site_ngr': 'cell_700_sites',
-#                'frequency': '700',
-#                'technology': 'LTE',
-#                'type': 'macrocell_site',
-#                'bandwidth': '2x10MHz',
-#                # set build date when deciding
-#                'build_date': None,
-#            },
-#        ]
-#    },
+    }
 }
 
 AVAILABLE_STRATEGY_INTERVENTIONS = {
@@ -156,7 +148,7 @@ AVAILABLE_STRATEGY_INTERVENTIONS = {
                                 
     # Intervention Strategy 5: Alvaro
      # Integrate 700
-    'macrocell_only_700': ('only_carrier_700'),
+    'macrocell_only_700': ('only_700'),
 }
 
 
@@ -219,18 +211,18 @@ def decide_interventions(strategy, budget, service_obligation_capacity, system, 
 
 def meet_service_obligation(budget, available_interventions, timestep,
                             service_obligation_capacity, system, results, index):
-    areas = _suggest_target_postcodes(system, timestep, service_obligation_capacity)
-    return _suggest_interventions(
+    areas = _suggest_target_postcodes(system, results, timestep, service_obligation_capacity)
+    return _suggest_interventions(system, 
         budget, available_interventions, areas, timestep, index, results, service_obligation_capacity)
 
 
 def meet_demand(budget, available_interventions, timestep, system, results, index):
-    areas = _suggest_target_postcodes(system, timestep)
-    return _suggest_interventions(
+    areas = _suggest_target_postcodes(system, results, timestep)
+    return _suggest_interventions(system, 
         budget, available_interventions, areas, timestep, index, results)
 
 
-def _suggest_interventions(budget, available_interventions, areas, timestep, index, results, threshold=None):
+def _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, threshold=None):
     built_interventions = []
     spend = []
     chart1 = results.chart_1[index]
@@ -241,10 +233,12 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
 
     for area in areas:
         area_interventions = []
-        if BUDGET_LIMIT and budget < 0:
+        if results.co_budget_limit and budget < 0:
             break
-
-        if _area_satisfied(area, area_interventions, threshold):
+#        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), area.capacity, area.threshold_demand, area.demand))
+#                    
+        if _area_satisfied(area, area_interventions, system, results, threshold):
             continue
 
         # group assets by site
@@ -259,6 +253,8 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
         if 'upgrade_to_lte' in available_interventions:
             build_option = INTERVENTIONS['upgrade_to_lte']['assets_to_build']
             cost = INTERVENTIONS['upgrade_to_lte']['cost']
+            
+            previous_capacity = _get_new_capacity(area, area_interventions)
             for site_ngr, site_assets in assets_by_site.items():
                 if site_ngr == 'small_cell_sites': 
                     continue
@@ -270,6 +266,21 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
                         to_build['pcd_sector'] = area.id
                         to_build['build_date'] = timestep
                         area_interventions.append(to_build)
+                        
+                        # Get capacity with the new asset
+                        new_capacity = _get_new_capacity(area, area_interventions)
+                        
+                        # If capacity hasn´t grown, then break for this PCD
+                        if(new_capacity <= previous_capacity):
+#                            if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                                print (area.id + " => Break")
+                            break
+                                        
+#                        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                            print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+                        # If capacity can grow, then new loop
+                        previous_capacity = new_capacity
+                        
                         built_interventions.append(to_build)
                         chart3.add_tech(area.id, timestep, 'LTE')
                         chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'LTE')
@@ -278,24 +289,29 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
                     spend.append((area.id, area.lad_id, 'upgrade_to_lte', cost))
                     chart1.add_cost(area.id, timestep, cost)
                     chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
-                    if BUDGET_LIMIT and budget < 0:
+                    if results.co_budget_limit and budget < 0:
                         break
 
-        if BUDGET_LIMIT and budget < 0:
+        if results.co_budget_limit and budget < 0:
             break
 
         # integrate_700
         if 'carrier_700' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, threshold):
+            if _area_satisfied(area, area_interventions, system, results, threshold):
                 continue
-
+            
             build_option = INTERVENTIONS['carrier_700']['assets_to_build']
             cost = INTERVENTIONS['carrier_700']['cost']
+            
+            previous_capacity = _get_new_capacity(area, area_interventions)
             for site_ngr, site_assets in assets_by_site.items():
                 if site_ngr == 'small_cell_sites':
                     continue
                 if 'LTE' in [asset['technology'] for asset in site_assets] and \
                         '700' not in [asset['frequency'] for asset in site_assets]:
+                            
+#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                        print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
                     # set both assets to this site_ngr
                     for option in build_option:
                         to_build = copy.copy(option)
@@ -303,6 +319,21 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
                         to_build['pcd_sector'] = area.id
                         to_build['build_date'] = timestep
                         area_interventions.append(to_build)
+                        
+                        # Get capacity with the new asset
+                        new_capacity = _get_new_capacity(area, area_interventions)
+                        
+                        # If capacity hasn´t grown, then break for this PCD
+                        if(new_capacity <= previous_capacity):
+#                            if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                                print (area.id + " => Break")
+                            break
+                                        
+#                        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
+                        # If capacity can grow, then new loop
+                        previous_capacity = new_capacity
+                
                         built_interventions.append(to_build)
                         chart3.add_tech(area.id, timestep, 'carrier_700')
                         chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
@@ -311,50 +342,67 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
                     chart1.add_cost(area.id, timestep, cost)
                     chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
                     budget -= cost
-                    if BUDGET_LIMIT and budget < 0:
+                    if results.co_budget_limit and budget < 0:
                         break
 
-        if BUDGET_LIMIT and budget < 0:
+        if results.co_budget_limit and budget < 0:
             break
         
         
 
         # only_integrate_700
-        if 'only_carrier_700' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, threshold):
+        if 'only_700' in available_interventions:
+            if _area_satisfied(area, area_interventions, system, results, threshold):
                 continue
-
-            area_sq_km = area.area
-            if 'carrier_700' in assets_by_site:
-                current_number = len(assets_by_site['carrier_700'])
-            else:
-                current_number = 0
-            current_density = current_number / area_sq_km
-            build_option = INTERVENTIONS['carrier_700']['assets_to_build']
-            cost = INTERVENTIONS['carrier_700']['cost']
-
+            
+            previous_capacity = _get_new_capacity(area, area_interventions)              
             while True:
+                current_assets = area.assets + area_interventions
+                assets_lte = len([asset for asset in current_assets if asset['frequency'] == "800"])
+                assets_700 = len([asset for asset in current_assets if asset['frequency'] == "700"])
+
+                if (assets_lte > assets_700):
+                    build_option = INTERVENTIONS['carrier_700']['assets_to_build']
+                    cost = INTERVENTIONS['carrier_700']['cost']
+                else:
+                    build_option = INTERVENTIONS['new_site_carrier_700']['assets_to_build']
+                    cost = INTERVENTIONS['new_site_carrier_700']['cost']
+                    
                 to_build = copy.deepcopy(build_option)
                 to_build[0]['build_date'] = timestep
                 to_build[0]['pcd_sector'] = area.id
-
-                area_interventions += to_build
-                built_interventions += to_build
+                area_interventions += to_build # This is for all the upgrades of this area
+                
+                # Get capacity with the new asset
+                new_capacity = _get_new_capacity(area, area_interventions)
+                
+                # If capacity hasn´t grown, then break for this PCD
+                if(new_capacity <= previous_capacity):
+#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                        print (area.id + " => Break")
+                    break
+                                
+#                if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                    print ("Area = {},  Assets = {}, New assets = {}, LTE assets = {}, 700 assets = {}, Cost = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), assets_lte, assets_700, cost, previous_capacity, new_capacity, area.threshold_demand, area.demand))
+                
+                # If capacity can grow, then new loop
+                previous_capacity = new_capacity
+                built_interventions += to_build #This is for the whole year
+                
                 spend.append((area.id, area.lad_id, 'carrier_700', cost))
                 chart1.add_cost(area.id, timestep, cost)
                 chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
-                chart3.add_tech(area.id, timestep, 'carrier_700')
-                chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
-                budget -= cost
-
-                if (BUDGET_LIMIT and budget < 0) or _area_satisfied(area, area_interventions, threshold):
+                budget -= cost                
+                
+                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, threshold):
+                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+                        print ("The demand/coverage obligation of {} is {}".format(area.id, "satisfied"))
                     break
-        
-        
+                       
         
         # integrate_3.5
         if 'carrier_3500' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, threshold):
+            if _area_satisfied(area, area_interventions, system, results, threshold):
                 continue
 
             build_option = INTERVENTIONS['carrier_3500']['assets_to_build']
@@ -379,77 +427,131 @@ def _suggest_interventions(budget, available_interventions, areas, timestep, ind
                     chart1.add_cost(area.id, timestep, cost)
                     chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
                     budget -= cost
-                    if BUDGET_LIMIT and budget < 0:
+                    if results.co_budget_limit and budget < 0:
                         break
 
-        if BUDGET_LIMIT and budget < 0:
+        if results.co_budget_limit and budget < 0:
             break
 
         # build small cells to next density
         if 'small_cell' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, threshold):
+            if _area_satisfied(area, area_interventions, system, results, threshold):
                 continue
-
-            area_sq_km = area.area
-            if 'small_cell_sites' in assets_by_site:
-                current_number = len(assets_by_site['small_cell_sites'])
-            else:
-                current_number = 0
-            current_density = current_number / area_sq_km
             build_option = INTERVENTIONS['small_cell']['assets_to_build']
             cost = INTERVENTIONS['small_cell']['cost']
-
+            
+            previous_capacity = _get_new_capacity(area, area_interventions) 
+            
             while True:
                 to_build = copy.deepcopy(build_option)
                 to_build[0]['build_date'] = timestep
                 to_build[0]['pcd_sector'] = area.id
 
                 area_interventions += to_build
+                
+                # Get capacity with the new asset
+                new_capacity = _get_new_capacity(area, area_interventions)
+                
+                # If capacity hasn´t grown, then break for this PCD
+                if(new_capacity <= previous_capacity):
+#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                        print (area.id + " => Break")
+                    break
+                                
+#                if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                    print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+                
+                # If capacity can grow, then new loop
+                previous_capacity = new_capacity
+                
                 built_interventions += to_build
                 spend.append((area.id, area.lad_id, 'small_cells', cost))
                 chart1.add_cost(area.id, timestep, cost)
                 chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
-                chart3.add_tech(area.id, timestep, 'carrier_700')
-                chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
                 budget -= cost
 
-                if (BUDGET_LIMIT and budget < 0) or _area_satisfied(area, area_interventions, threshold):
+                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, threshold):
                     break
 
     return built_interventions, budget, spend, results
 
-def next_larger_value(x, vals):
-    for val in vals:
-        if val > x:
-            return val
-    else:
-        return vals[-1]
-
-
-def _suggest_target_postcodes(system, timestep, threshold=None):
+def _suggest_target_postcodes(system, results, timestep, threshold=None):
     """Sort postcodes by population density (descending)
     - if considering threshold, filter out any with capacity above threshold
-    """
-    postcodes = system.postcode_sectors.values()
-#    total_postcodes = len(postcodes)
+    """ 
     if threshold is not None:
-        considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < threshold]
-        #print("THRES Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
-        # Take only PCD with less than X inhabitants
-        if POPULATION_LIMIT_BOOL:
-            considered_postcodes = [pcd for pcd in postcodes if (pcd.population < POPULATION_LIMIT_NUMBER)]
-            #print("THRES Considering {} of {} postcodes with less than {}".format(len(considered_postcodes), total_postcodes, POPULATION_LIMIT_NUMBER))
-    else:
-        considered_postcodes = [p for p in postcodes]
-        #print("DEMAN Considering {} of {} postcodes".format(len(considered_postcodes), total_postcodes))
-           
-    return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
+        # Suggest postcodes to cover COVERAGE OBLIGATIONS
+        # Step 1) Select postcodes according to population
+        # Step 2) Select postcodes according to percentage covered
+        # Step 3) Select postcodes that dont cover obligations   
+        
+        
+        # Get all the postcodes
+        all_postcodes = system.postcode_sectors.values()
+        
+        
+        # Step 1) Select postcodes according to population
+        if results.co_population_limit_boolean:
+            all_postcodes = [pcd for pcd in all_postcodes if (pcd.population < results.co_population_limit)]
 
-def _area_satisfied(area, built_interventions, threshold):
+
+        # Step 2) Select postcodes according to percentage covered
+        postcodes = []
+        # Filter by percentage covered by country # ENGLISH strategy
+        if results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']: 
+            # Set amount of population that has to be covered per country
+            pop_covered_per_country = {'E': 0, 'S': 0, 'W': 0}
+            target_pop_covered_per_country = { 'E': system.pop_per_country['E'] * results.co_percentage_covered, 'S': system.pop_per_country['S'] * results.co_percentage_covered, 'W': system.pop_per_country['W'] * results.co_percentage_covered}
+            
+            # Select postcodes per country 
+            for pcd in all_postcodes:
+                if pop_covered_per_country[pcd.lad_id[0]] <= target_pop_covered_per_country[pcd.lad_id[0]]:
+                    pop_covered_per_country[pcd.lad_id[0]] += pcd.population
+                    postcodes.append(pcd)
+                    
+        # Filter by percentage covered # SPANISH, GERMAN and FRENCH strategy
+        elif results.co_coverage_obligation_type in ['cov_ob_2','cov_ob_3','cov_ob_4']: 
+            pop_covered = 0
+            target_pop = system.population * results.co_percentage_covered
+            # Select postcodes in the whole UK
+            for pcd in all_postcodes:
+                if pop_covered >= target_pop:
+                    break
+                pop_covered += pcd.population
+                postcodes.append(pcd)
+                
+        # Select all the postcodes
+        else:
+            postcodes = [p for p in all_postcodes]
+            
+        
+        # Step 3) Select postcodes that dont cover obligations
+        considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < pcd.threshold_demand]
+        print("THRES Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
+            
+    else:
+        if results.co_invest_by_demand:
+            # Suggest postcodes to cover DEMAND        
+            considered_postcodes = [p for p in system.postcode_sectors.values()]
+        else:
+            # No postcodes to invest by DEMAND
+            considered_postcodes = []
+            
+        print("DEMAN Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
+        
+
+    # Orden PCDs according to the coverage obligation order
+    if results.co_descending_order:
+        return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
+    else:
+        return sorted(considered_postcodes, key=lambda pcd: pcd.population_density)
+
+
+def _area_satisfied(area, area_interventions, system, results, threshold):      
     if threshold is None:
         target_capacity = area.demand
     else:
-        target_capacity = threshold
+        target_capacity = threshold * area.population_density
 
     data = {
         "id": area.id,
@@ -459,15 +561,51 @@ def _area_satisfied(area, built_interventions, threshold):
         "user_throughput_GB": area.user_throughput_GB,
         "user_throughput_mbps": area.user_throughput_mbps,
     }
-    assets = area.assets + built_interventions
+    assets = area.assets + area_interventions
 
     test_area = PostcodeSector(
         data,
         area.ofcom_lad_id,
         assets,
         area._capacity_lookup_table,
-        area._clutter_lookup
+        area._clutter_lookup,
+        threshold
     )
     reached_capacity = test_area.capacity
 
     return reached_capacity >= target_capacity
+
+#
+#def _coverage_obligation_satisfied(area, area_interventions, system, results):
+#    
+#    if results.co_coverage_obligation_type == 'cov_ob_1': # This is Spain
+#        return system.coverage_obligation_satisfied(area)
+#    else:
+#        return False
+
+
+def _get_new_capacity(area, built_interventions):
+    data = {
+        "id": area.id,
+        "lad_id": area.lad_id,
+        "population": area.population,
+        "area": area.area,
+        "user_throughput_GB": area.user_throughput_GB,
+        "user_throughput_mbps": area.user_throughput_mbps,
+    }
+    test_assets = area.assets + built_interventions
+    
+    if (area.id == "SG175FALSE"):
+        print("-->--->---> PRINTING ASSETS <---<---<---<--")
+        pprint.pprint (repr(list(test_assets)))
+        
+    test_area = PostcodeSector(
+        data,
+        area.ofcom_lad_id,
+        test_assets,
+        area._capacity_lookup_table,
+        area._clutter_lookup,
+        0
+    )
+
+    return test_area.capacity
