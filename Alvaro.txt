@@ -23,6 +23,14 @@ plot_chart_2_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_2_lads_pop_st
 plot_chart_3_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_3_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
 
 
+######
+URBAN    => pcd1 (M607) until pcd5593(CH411)
+SUBURBAN => pcd5594(BD123) until pcd8985(PH304)
+RURAL    => There are no rural areas in this model
+
+
+
+
 
 ######
 # USING MATPLOTLIB
@@ -40,6 +48,26 @@ conda install -c anaconda basemap
 
 
 2. Copy the code
+
+
+
+
+
+
+1. Recibir cambios git:
+
+git pull
+
+ 
+
+2. Guardar cambios localmente y pushearlos a git. En el comando push hay que poner usuario y contraseña de git.
+
+git status
+git add -A
+git status
+git commit -m "Your commit message"
+
+git push 
 
 
 

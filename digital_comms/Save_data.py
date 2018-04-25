@@ -6,10 +6,6 @@ import digital_comms.plots as plots
 import csv
 import os
 
-#CONFIG = configparser.ConfigParser()
-#CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
-#OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
-
 
 #    eng = matlab.engine.start_matlab() # ("-desktop") para abrir la GUI
 #    MATLAB_FOLDER = "D:\Dropbox\00TFM\git\digital_comms\matlab_scripts"
@@ -190,9 +186,9 @@ def write_chart_2(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         
     metrics_file.close()
     
-#    # Plotting
-#    print('- Ploting Chart 2 PCDs...Capacity margin per year')
-#    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'], 'pcd_chart_2_cap_margin_per_year_all', suffix)  
+    # Plotting
+    print('- Ploting Chart 2 PCDs...Capacity margin per year')
+    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'], 'pcd_chart_2_cap_margin_per_year_all', suffix)  
     
 
     
@@ -225,7 +221,7 @@ def write_chart_3(ict_manager, coverage_obligation_type, pop_scenario, throughpu
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Total LTE technology upgrades per year", ['PCDs'], 'pcd_chart_3_lte_tech_upgrades_per_year_all', suffix)  
 #    print('- Ploting Chart 3 PCDs...Total 700MHz technology upgrades per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total 700 MHz technology upgrades per year", ['PCDs'], 'pcd_chart_3_700_tech_upgrades_per_year_all', suffix)  
-    
+#    
    
     
 def write_chart_4(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
@@ -248,13 +244,13 @@ def write_chart_4(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         metrics_writer.writerow((value[0], value[1], value[2], value[3], value[8], value[4][2020], value[5][2020], value[6][2020], value[4][2021], value[5][2021], value[6][2021], value[4][2022], value[5][2022], value[6][2022], value[4][2023], value[5][2023], value[6][2023], value[4][2024], value[5][2024], value[6][2024], value[4][2025], value[5][2025], value[6][2025], value[4][2026], value[5][2026], value[6][2026], value[4][2027], value[5][2027], value[6][2027], value[4][2028], value[5][2028], value[6][2028], value[4][2029], value[5][2029], value[6][2029], value[4][2030], value[5][2030], value[6][2030]))
     metrics_file.close()
     
-#    # Plotting
+    # Plotting
 #    print('- Ploting Chart 4 PCDs...Total capacity per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Total capacity per year", ['PCDs'], 'pcd_chart_4_capacity_per_year_all', suffix)  
 #    print('- Ploting Chart 4 PCDs...Total demand per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total demand per year", ['PCDs'], 'pcd_chart_4_demand_per_year_all', suffix)  
-#    print('- Ploting Chart 4 PCDs...Total population covered per year')
-#    plots.plot_chart_per_year(ict_manager, results, chart, 8, [6], TIMESTEPS, "Total population covered per year", ['PCDs'], 'pcd_chart_4_pop_covered_per_year_all', suffix) 
+    print('- Ploting Chart 4 PCDs...Total population covered per year')
+    plots.plot_chart_per_year(ict_manager, results, chart, 8, [6], TIMESTEPS, "Total population covered per year", ['PCDs'], 'pcd_chart_4_pop_covered_per_year_all', suffix) 
     
 def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
     print('-> Chart 1 LADs...')
@@ -277,17 +273,13 @@ def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 
     
     # Plotting
-    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
-    plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'lad_chart_1_cost', suffix)
-    
-    
-#    print('- Ploting Chart 1 LADs...Total population and cost')
-#    plots.plot_chart_comparison(ict_manager, results, chart, 6, [2,5], "Total population and cost per LAD", ['LADs', 'Population', 'Cost'], 'lad_chart_1_population_cost', suffix)
-#    print('- Ploting Chart 1 LADs...Total population and cost aggregated')
-#    plots.plot_chart_comparison(ict_manager, results, chart, 6, [6,7], "Total population and cost aggregated", ['LADs', 'Population', 'Cost'], 'lad_chart_1_aggregated_population_cost', suffix)
-    print('- Ploting Chart 1 LADs...Total cost per year')
-    plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['LADs'], 'lad_chart_1_cost_per_year_all', suffix)  
-    
+#    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
+#    plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'lad_chart_1_cost', suffix)
+#    
+#    
+#    print('- Ploting Chart 1 LADs...Total cost per year')
+#    plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['LADs'], 'lad_chart_1_cost_per_year_all', suffix)  
+#    
     # Maps
     print('- Drawing Chart 1 LADs...Population')
     maps.print_map(chart, "Population", 2, results, 'lad_chart_1_population', suffix, 'Blues')
@@ -297,8 +289,8 @@ def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
     maps.print_map(chart, "Total cost", 5, results, 'lad_chart_1_aggregated_cost', suffix, 'OrRd')
     print('- Drawing Chart 1 LADs...Total cost during all years')
     maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, results, 'lad_chart_1_cost_per_year', suffix, 'OrRd')
-    print('- Drawing Chart 1 LADs...Total cost per year')
-    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
+#    print('- Drawing Chart 1 LADs...Total cost per year')
+#    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
 
     
     
@@ -323,10 +315,10 @@ def write_chart_2_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 #    # Plotting
 #    print('- Ploting Chart 2 LADs...Capacity margin per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['LADs'], 'lad_chart_2_cap_margin_per_year_all', suffix)  
-#
-#    # Maps
-#    print('- Drawing Chart 2 LADs...Capacity margin during all years')
-#    maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
+
+    # Maps
+    print('- Drawing Chart 2 LADs...Capacity margin during all years')
+    maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
 #    print('- Drawing Chart 2 LADs...Capacity margin per year')
 #    maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_year', suffix, 'RdYlGn') # OrRd
     
@@ -365,7 +357,7 @@ def write_chart_3_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 #    maps.print_tech_map_aggregated(chart, "Total technology upgrades", [6,7], results, 'lad_chart_3_aggregated_tech_upgrades', suffix, 'Blues')
 #    print('- Drawing Chart 3 LADs...Technology upgrades per year')
 #    maps.print_tech_map_per_year(chart, "Technology upgrades year", [4,5], TIMESTEPS, results, 'lad_chart_3_tech_upgrades_year', suffix, 'Blues') # OrRd
-    
+#    
 
 def write_chart_4_LADs(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
     print('-> Chart 4 LADs...')
@@ -387,40 +379,65 @@ def write_chart_4_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
         metrics_writer.writerow((value[0], value[1], value[2], value[3], value[8], value[4][2020], value[5][2020], value[6][2020], value[4][2021], value[5][2021], value[6][2021], value[4][2022], value[5][2022], value[6][2022], value[4][2023], value[5][2023], value[6][2023], value[4][2024], value[5][2024], value[6][2024], value[4][2025], value[5][2025], value[6][2025], value[4][2026], value[5][2026], value[6][2026], value[4][2027], value[5][2027], value[6][2027], value[4][2028], value[5][2028], value[6][2028], value[4][2029], value[5][2029], value[6][2029], value[4][2030], value[5][2030], value[6][2030]))
     metrics_file.close()
 
-#    # Plotting
+    # Plotting
 #    print('- Ploting Chart 4 LADs...Total capacity per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Total capacity per year", ['LADs'], 'lad_chart_4_capacity_per_year_all', suffix)  
 #    print('- Ploting Chart 4 LADs...Total demand per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total demand per year", ['LADs'], 'lad_chart_4_demand_per_year_all', suffix)  
 #    print('- Ploting Chart 4 LADs...Total population covered per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [6], TIMESTEPS, "Total population covered per year", ['LADs'], 'lad_chart_4_pop_covered_per_year_all', suffix)  
-#    
-#    
-#    
-#    # Maps
+    
+    
+    
+    # Maps
 #    print('- Drawing Chart 4 LADs...Total capacity during all years')
 #    maps.print_map_year_all(chart, "Total capacity per year", 4, TIMESTEPS, results, 'lad_chart_4_capacity_per_year', suffix, 'Greens')
 #    print('- Drawing Chart 4 LADs...Total demand during all years')
 #    maps.print_map_year_all(chart, "Total demand per year", 5, TIMESTEPS, results, 'lad_chart_4_demand_per_year', suffix, 'Reds')
-#    print('- Drawing Chart 4 LADs...Total population covered during all years')
-#    maps.print_map_year_all(chart, "Total population covered per year", 6, TIMESTEPS, results, 'lad_chart_4_pop_covered_per_year', suffix, 'Greens')
+    print('- Drawing Chart 4 LADs...Total population covered during all years')
+    maps.print_map_year_all(chart, "Total population covered per year", 6, TIMESTEPS, results, 'lad_chart_4_pop_covered_per_year', suffix, 'Greens')
 
+def write_chart_5(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
+    print('-> Chart 5 PCDs...')
+    chart = results.chart5_get_table(index)
     
+    # Saving numerical data
+    suffix = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    metrics_filename = os.path.join(OUTPUT_FOLDER, 'csv', 'pcd_chart_5_{}.csv'.format(suffix))
+
+    metrics_file = open(metrics_filename, 'w', newline='')
+    metrics_writer = csv.writer(metrics_file)
+    metrics_writer.writerow(('Year', 'Population', 'Cost', 'Aggregated cost', '% Population covered', '# PCDs covered', 'Capacity margin', 'Invest by demand'))
+
+    for key, value in chart._table.items():
+        metrics_writer.writerow((value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7]))
+    metrics_file.close()
+
+   
 def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER):
     print('')
     print('-> GENERAL CHARTS PCDs...')
     
+    
+    # Plotting    
     print('- Ploting cost comparison per strategy')
-    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_pcd', 2, 6, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (€)'], 'pcd_1_cost_comparison_per_strategy')  
+    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_pcd', 2, 6, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], 'pcd_1_cost_comparison_per_strategy')  
     
-    
-    print('')
-    print('-> GENERAL CHARTS LADs...')
-    print('- Ploting cost comparison per strategy')
-    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_lad', 2, 6, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (€)'], 'lad_1_cost_comparison_per_strategy')        
-
-    
-    
+#    # Print summary data
+#    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+##        print('-> Population covered: {}, {}, {}, {}, {}'.format(cov_1,cov_2,cov_3,cov_4,cov_5))
+#        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+##        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+##        if(table_name == 'chart1_pcd'):
+##            chart = results.chart1_get_table(index)
+##        elif (table_name == 'chart1_lad'):
+##            chart = results.chart1_lads_get_table(index)
+##        else:
+##        chart1 = results.chart1_get_table(index)
+#        chart4 = results.chart4_get_table(index)
+#        print('-> Population covered: {}, {}, {}, {}, {}, {}'.format(pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy, chart4))
+#    
+#    
 # This function is copied in plot.py so when something is modified, it has to be modified there.
 def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy):
     suffix = '{}_pop_{}_throughput_{}_coverage_{}_strategy_{}_'.format(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)

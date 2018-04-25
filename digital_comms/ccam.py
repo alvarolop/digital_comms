@@ -647,6 +647,13 @@ class PostcodeSector(object):
         """
         capacity_margin = self.capacity - self.demand
         return capacity_margin
+    
+    @property
+    def coverage_obligations_covered(self):
+        """obj: If coverage obligations are met in this PCD
+        """
+#        capacity_margin = self.capacity - self.threshold_demand
+        return (self.capacity > self.threshold_demand)
 
 
 def pairwise(iterable):

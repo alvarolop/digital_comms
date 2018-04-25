@@ -194,32 +194,32 @@ def decide_interventions(strategy, budget, service_obligation_capacity, system, 
     available_interventions = AVAILABLE_STRATEGY_INTERVENTIONS[strategy]
 
     if service_obligation_capacity > 0:
-        service_built, budget, service_spend, results = meet_service_obligation(budget,
-            available_interventions, timestep, service_obligation_capacity, system, results, index)
+        service_built, budget, service_spend, results = meet_service_obligation(budget, available_interventions, timestep, service_obligation_capacity, system, results, index)
     else:
-        service_built = []
-        service_spend = []
+        service_built, service_spend = [], []
 
     # Build to meet demand
-    built, budget, spend, results = meet_demand(budget, available_interventions, timestep, system, results, index)
+    if (budget > 40000 or not results.co_budget_limit):
+        built, budget, spend, results = meet_demand(budget, available_interventions, timestep, system, results, index)
+        results.chart_5[index].invest_to_meet_demand(timestep)
+    else:
+        print("DEMAN Considering {} of {} postcodes, no more budget".format(0, len(system.postcode_sectors.values())))
+        built, budget, spend, results = [], budget, [], results
 
-    print("Service", len(service_built))
-    print("Demand", len(built))
+#    print("Service", len(dp_built))
+#    print("Service", len(service_built))
+#    print("Demand", len(built))
 
     return built + service_built, budget, spend + service_spend, results
 
-
-def meet_service_obligation(budget, available_interventions, timestep,
-                            service_obligation_capacity, system, results, index):
-    areas = _suggest_target_postcodes(system, results, timestep, service_obligation_capacity)
-    return _suggest_interventions(system, 
-        budget, available_interventions, areas, timestep, index, results, service_obligation_capacity)
+def meet_service_obligation(budget, available_interventions, timestep, service_obligation_capacity, system, results, index):
+    areas = _suggest_target_postcodes_coverage_obligations(system, results, timestep, service_obligation_capacity)
+    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, service_obligation_capacity)
 
 
 def meet_demand(budget, available_interventions, timestep, system, results, index):
-    areas = _suggest_target_postcodes(system, results, timestep)
-    return _suggest_interventions(system, 
-        budget, available_interventions, areas, timestep, index, results)
+    areas = _suggest_target_postcodes_demand(system, results, timestep)
+    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results)
 
 
 def _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, threshold=None):
@@ -395,8 +395,8 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 budget -= cost                
                 
                 if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, threshold):
-                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-                        print ("The demand/coverage obligation of {} is {}".format(area.id, "satisfied"))
+#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
+#                        print ("The demand/coverage obligation of {} is {}".format(area.id, "satisfied"))
                     break
                        
         
@@ -475,71 +475,110 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 
     return built_interventions, budget, spend, results
 
-def _suggest_target_postcodes(system, results, timestep, threshold=None):
-    """Sort postcodes by population density (descending)
-    - if considering threshold, filter out any with capacity above threshold
-    """ 
-    if threshold is not None:
-        # Suggest postcodes to cover COVERAGE OBLIGATIONS
-        # Step 1) Select postcodes according to population
-        # Step 2) Select postcodes according to percentage covered
-        # Step 3) Select postcodes that dont cover obligations   
+def _suggest_target_postcodes_coverage_obligations(system, results, timestep, threshold):
+    """Suggest postcodes to cover COVERAGE OBLIGATIONS
+    """
+    all_postcodes = system.postcode_sectors.values()
+    postcodes = []
+                
+    # FRENCH strategy
+    if results.co_coverage_obligation_type in ['cov_ob_2']:
+        all_postcodes_inverted = sorted(all_postcodes, key=lambda pcd: pcd.population_density)
+
+        priority_postcodes, remaining_postcodes, pop_covered = [], [], 0
+        target_pop = system.population * results.co_deploiement_prioritaire
         
+        # Part 1: Select postcodes of deploiment prioritaire and remove them from the list
+        for pcd in all_postcodes_inverted:
+            if pop_covered <= target_pop:
+                pop_covered += pcd.population
+                priority_postcodes.append(pcd)
+            else:
+                remaining_postcodes.append(pcd)
         
-        # Get all the postcodes
-        all_postcodes = system.postcode_sectors.values()
-        
-        
-        # Step 1) Select postcodes according to population
+        # Part 2: 
+        # Change the order to start investing in the most profitable ones
+        priority_postcodes = sorted(priority_postcodes, key=lambda pcd: -pcd.population_density)
+        remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)
+        # Add all postcodes together
+        postcodes = priority_postcodes + remaining_postcodes
+
+
+    # GERMAN strategy
+    elif results.co_coverage_obligation_type in ['cov_ob_3']:
+        pop_covered = 0
+        target_pop = system.population * results.co_percentage_covered
+        # Select postcodes in the whole UK
+        for pcd in all_postcodes:
+            if pop_covered >= target_pop:
+                break
+            pop_covered += pcd.population
+            postcodes.append(pcd)
+            
+            
+    # SPANISH strategy
+    elif results.co_coverage_obligation_type in ['cov_ob_4']:
+        # Select postcodes according to population
         if results.co_population_limit_boolean:
             all_postcodes = [pcd for pcd in all_postcodes if (pcd.population < results.co_population_limit)]
-
-
-        # Step 2) Select postcodes according to percentage covered
-        postcodes = []
-        # Filter by percentage covered by country # ENGLISH strategy
-        if results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']: 
-            # Set amount of population that has to be covered per country
-            pop_covered_per_country = {'E': 0, 'S': 0, 'W': 0}
-            target_pop_covered_per_country = { 'E': system.pop_per_country['E'] * results.co_percentage_covered, 'S': system.pop_per_country['S'] * results.co_percentage_covered, 'W': system.pop_per_country['W'] * results.co_percentage_covered}
             
-            # Select postcodes per country 
-            for pcd in all_postcodes:
-                if pop_covered_per_country[pcd.lad_id[0]] <= target_pop_covered_per_country[pcd.lad_id[0]]:
-                    pop_covered_per_country[pcd.lad_id[0]] += pcd.population
-                    postcodes.append(pcd)
-                    
-        # Filter by percentage covered # SPANISH, GERMAN and FRENCH strategy
-        elif results.co_coverage_obligation_type in ['cov_ob_2','cov_ob_3','cov_ob_4']: 
-            pop_covered = 0
-            target_pop = system.population * results.co_percentage_covered
-            # Select postcodes in the whole UK
-            for pcd in all_postcodes:
-                if pop_covered >= target_pop:
-                    break
-                pop_covered += pcd.population
+        pop_covered = 0
+        population = sum(pcd.population for pcd in all_postcodes)
+        target_pop = population * results.co_percentage_covered
+        # Select postcodes in the whole UK
+        for pcd in all_postcodes:
+            if pop_covered >= target_pop:
+                break
+            pop_covered += pcd.population
+            postcodes.append(pcd)
+            
+            
+    # ENGLISH strategy
+    elif results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']: 
+        # Set amount of population that has to be covered per country
+        pop_covered_per_country = {'E': 0, 'S': 0, 'W': 0}
+        target_pop_covered_per_country = { 'E': system.pop_per_country['E'] * results.co_percentage_covered, 'S': system.pop_per_country['S'] * results.co_percentage_covered, 'W': system.pop_per_country['W'] * results.co_percentage_covered}
+        
+        # Select postcodes per country 
+        for pcd in all_postcodes:
+            if pop_covered_per_country[pcd.lad_id[0]] <= target_pop_covered_per_country[pcd.lad_id[0]]:
+                pop_covered_per_country[pcd.lad_id[0]] += pcd.population
                 postcodes.append(pcd)
-                
-        # Select all the postcodes
-        else:
-            postcodes = [p for p in all_postcodes]
             
-        
-        # Step 3) Select postcodes that dont cover obligations
-        considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < pcd.threshold_demand]
-        print("THRES Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
-            
+    # OTHER strategies
     else:
-        if results.co_invest_by_demand:
-            # Suggest postcodes to cover DEMAND        
-            considered_postcodes = [p for p in system.postcode_sectors.values()]
-        else:
-            # No postcodes to invest by DEMAND
-            considered_postcodes = []
-            
-        print("DEMAN Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
+        postcodes = [p for p in all_postcodes]
+        
+  
+    # Select postcodes that dont cover obligations
+    considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < pcd.threshold_demand]
+    print("THRES Considering {} of {} postcodes".format(len(considered_postcodes), len(postcodes)))
+        
+    if results.co_coverage_obligation_type in ['cov_ob_2', 'cov_ob_4']:
+        return considered_postcodes
+    
+    # Orden PCDs according to the coverage obligation order
+    if results.co_descending_order:
+        return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
+    else:
+        return sorted(considered_postcodes, key=lambda pcd: pcd.population_density)
+
+
+def _suggest_target_postcodes_demand(system, results, timestep):
+    """Suggest postcodes to cover DEMAND
+    """
+    if results.co_invest_by_demand:
+        # Suggest postcodes to cover DEMAND        
+        considered_postcodes = [p for p in system.postcode_sectors.values()]
+    else:
+        # No postcodes to invest by DEMAND
+        considered_postcodes = []
+    print("DEMAN Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
         
 
+    if results.co_coverage_obligation_type in ['cov_ob_2']:
+        return considered_postcodes
+    
     # Orden PCDs according to the coverage obligation order
     if results.co_descending_order:
         return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
@@ -572,17 +611,7 @@ def _area_satisfied(area, area_interventions, system, results, threshold):
         threshold
     )
     reached_capacity = test_area.capacity
-
     return reached_capacity >= target_capacity
-
-#
-#def _coverage_obligation_satisfied(area, area_interventions, system, results):
-#    
-#    if results.co_coverage_obligation_type == 'cov_ob_1': # This is Spain
-#        return system.coverage_obligation_satisfied(area)
-#    else:
-#        return False
-
 
 def _get_new_capacity(area, built_interventions):
     data = {
@@ -595,10 +624,6 @@ def _get_new_capacity(area, built_interventions):
     }
     test_assets = area.assets + built_interventions
     
-    if (area.id == "SG175FALSE"):
-        print("-->--->---> PRINTING ASSETS <---<---<---<--")
-        pprint.pprint (repr(list(test_assets)))
-        
     test_area = PostcodeSector(
         data,
         area.ofcom_lad_id,
@@ -607,5 +632,4 @@ def _get_new_capacity(area, built_interventions):
         area._clutter_lookup,
         0
     )
-
     return test_area.capacity

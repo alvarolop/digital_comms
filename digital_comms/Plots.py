@@ -146,7 +146,7 @@ def plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, table_name,
         
 #        y_values = [value[7] for key,value in chart._table.items()]
         
-        x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
+        x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, coverage_obligation_type)
 
         ax.plot(x_values, y_values, label=nice_index)
         
@@ -171,11 +171,17 @@ def plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, table_name,
     plt.close(fig)
 
 
-def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg, results, chart):
-    x_values = np.linspace(0,100,plot_points)
+def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, c_o_type = None):
+    
+#    if (c_o_type == None):
+#        x_values = np.linspace(0,100,plot_points)
     y_limits = np.linspace(0,results.population_2020,plot_points)
+#    else:
+#        x_values = np.linspace(0,100*results.co_percentage_covered_all[c_o_type],plot_points*results.co_percentage_covered_all[c_o_type])
+#        y_limits = np.linspace(0,results.population_2020,plot_points*results.co_percentage_covered_all[c_o_type])
     y_values = [] # La lista que voy a rellenar con los puntos Y. Tendrá la misma dimensión que y_limits
     
+#    not_reached = 0
     for pop_limit in y_limits: # Relleno y_values buscando en los límites uno a uno.
         previous_item = None # Cuando me pase en la comparación de población miro el anterior pcd porque ese es el que me interesará.
         for key, value in chart._table.items(): # Miro a ver qué pcd se pasa para coger el anterior
@@ -191,6 +197,11 @@ def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg
                     y_values.append(cost)
                     break # Solo relleno un y_value cada vez que recorro los pcds. Cuando lo tenga vuelvo a empezar
             previous_item = value
+#                    not_reached += 1
+    print ("This is the limit: {}, {}".format (len(y_values),len(y_limits)))
+    x_values = np.linspace(0, 100 * (len(y_values) / len(y_limits)), plot_points * (len(y_values) / len(y_limits)))
+    
+#    adjust = [0] * (len(x_values) - len(y_limits))
     return x_values, y_values
 
 
@@ -202,7 +213,10 @@ def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, cov
     return suffix
 
 def _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy):
-    suffix = '{}, Pop: {}, Throughput: {}, C.O.: {}, Strategy: {}'.format(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    
+    dict_cov_ob = {'cov_ob_1': 'Custom', 'cov_ob_2': 'France', 'cov_ob_3': 'Germany', 'cov_ob_4': 'Spain', 'cov_ob_5': 'The UK'}
+    dict_cov_ob_speed = {'low': '2 mbps', 'baseline': '5 mbps', 'high': '8 mbps'}
+    suffix = '{}, Pop: {}, Throughput: {}, C.O.: {}, Strategy: {}'.format(dict_cov_ob.get(coverage_obligation_type,'new obligation'), pop_scenario, throughput_scenario, dict_cov_ob_speed.get(coverage_scenario, 'X mbps'), intervention_strategy)
     # for length, use 'base' for baseline scenarios
     suffix = suffix.replace('baseline', 'medium')
     return suffix
