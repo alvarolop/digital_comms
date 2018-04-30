@@ -25,11 +25,25 @@ CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
 INPUT_FOLDER = CONFIG['file_locations']['input_folder']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
+SHAPEFILE_PATH = CONFIG['file_locations']['shapefile_path']
+
+# Create sub-directories for results
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'csv')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'csv'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures', 'summary')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures', 'summary'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year'))
 
 print('')
 print('----------------------------------')
 print('Input  folder is: ' + INPUT_FOLDER)
 print('Output folder is:   ' + OUTPUT_FOLDER)
+print('Shapefile path is:   ' + SHAPEFILE_PATH)
 print('----------------------------------')
 
 BASE_YEAR = 2020
@@ -68,33 +82,6 @@ ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
 
 NETWORKS_TO_INCLUDE = ('A',)
 
-#RUN_OPTIONS_ORIGINAL = [
-#        ('low', 'low', 'minimal'),
-#        ('baseline', 'baseline', 'minimal'),
-#        ('high', 'high', 'minimal'),
-#        ('static2017', 'baseline', 'minimal'),
-#
-#        ('low', 'low', 'macrocell'),
-#        ('baseline', 'baseline', 'macrocell'),
-#        ('high', 'high', 'macrocell'),
-#        ('static2017', 'baseline', 'macrocell'),
-#
-#        ('low', 'low', 'macrocell_700'),
-#        ('baseline', 'baseline', 'macrocell_700'),
-#        ('high', 'high', 'macrocell_700'),
-#        ('static2017', 'baseline', 'macrocell_700'),
-#
-#        ('low', 'low', 'small_cell'),
-#        ('baseline', 'baseline', 'small_cell'),
-#        ('high', 'high', 'small_cell'),
-#        ('static2017', 'baseline', 'small_cell'),
-#
-#        ('low', 'low', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'small_cell_and_spectrum'),
-#        ('high', 'high', 'small_cell_and_spectrum'),
-#        ('static2017', 'baseline', 'small_cell_and_spectrum')
-#    ]
-
 if len(sys.argv) == 2 and sys.argv[1] == 'all':
 #    print('USING ALL THE POSSIBLE COMBINATIONS')
     RUN_OPTIONS = [
@@ -102,12 +89,12 @@ if len(sys.argv) == 2 and sys.argv[1] == 'all':
             ('baseline', 'baseline', 'low'),
             ('high', 'high', 'low'),
             ('static2017', 'baseline', 'low'),
-    
+
             ('low', 'low', 'baseline'),
             ('baseline', 'baseline', 'baseline'),
             ('high', 'high', 'baseline'),
             ('static2017', 'baseline', 'baseline'),
-    
+
             ('low', 'low', 'high'),
             ('baseline', 'baseline', 'high'),
             ('high', 'high', 'high'),
@@ -118,19 +105,6 @@ else:
 
 #    print('USING QUICK VERSION')
     RUN_OPTIONS = [
-#        ('low', 'low', 'low'),
-#        ('baseline', 'baseline', 'low'),
-#        ('high', 'high', 'low'),
-#        ('static2017', 'baseline', 'low'),
-#
-#        ('low', 'low', 'baseline'),
-#        ('baseline', 'baseline', 'baseline'),
-#        ('high', 'high', 'baseline'),
-#        ('static2017', 'baseline', 'baseline'),
-
-#        ('low', 'low', 'high'),
-#        ('baseline', 'baseline', 'high'),
-#        ('high', 'high', 'high'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
         ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
@@ -153,7 +127,7 @@ else:
 #        ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'high', 'cov_ob_1', 'small_cell_and_spectrum'),
     ]
-    
+
 COVERAGE_OBLIGATIONS = {
     'cov_ob_1': { # Ready
         'name': 'Coverage Obligation 1',
@@ -262,7 +236,7 @@ with open(LAD_FILENAME, 'r') as lad_file:
             "id": lad_id,
             "name": name
         })
-    
+
 
 ofcom_lads = []
 ofcom_380_to_174 = {}
@@ -277,8 +251,8 @@ with open(LAD_OFCOM_FILENAME, 'r') as lad_file:
             "name": name
         })
         ofcom_380_to_174[oslaua] = code
-    
-    
+
+
 #print (repr(ofcom_lads))
 # Read in postcode sectors (without population)
 # pcd_sectors = [
@@ -351,8 +325,8 @@ with open(THROUGHPUT_GB_FILENAME, 'r') as throughput_file:
             user_throughput_by_scenario_year_GB["low"][year] = float(low)
         if "static2017" in THROUGHPUT_SCENARIOS:
             user_throughput_by_scenario_year_GB["baseline"][year] = float(base)
-            
-            
+
+
 # DEMAND IN MBPS
 user_throughput_by_scenario_year_mbps = {
     scenario: {} for scenario in THROUGHPUT_SCENARIOS
@@ -486,20 +460,20 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
 
 def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads):
 #            print ("PCDS " + str(len([pcd for pcd in system.postcode_sectors.values() if pcd.area < 0.14])))
-    
+
     previous_pop1,previous_pop2,previous_pop3,previous_pop4 = 0,0,0,0
     previous_pop1_lad,previous_pop2_lad,previous_pop3_lad,previous_pop4_lad = 0,0,0,0
 
     list_postcodes = []
     list_lads = []
-    
+
     if results.co_coverage_obligation_type in ['cov_ob_2']:   # FRANCE
         all_postcodes_inverted = sorted(system.postcode_sectors.values(), key=lambda pcd: pcd.population_density)
         print("THRES French 1 - Considering {} of {} postcodes".format(len(all_postcodes_inverted), len(system.postcode_sectors.values())))
 
         priority_postcodes, remaining_postcodes, pop_covered = [], [], 0
         target_pop = system.population * results.co_deploiement_prioritaire
-        
+
         # Select postcodes of deploiment prioritaire and remove them from the list
         for pcd in all_postcodes_inverted:
             if pop_covered <= target_pop:
@@ -507,28 +481,28 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
                 priority_postcodes.append(pcd)
             else:
                 remaining_postcodes.append(pcd)
-        
+
         # Change the order to start investing in the most profitable ones
         priority_postcodes = sorted(priority_postcodes, key=lambda pcd: -pcd.population_density)
         remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)
-        
+
         print("THRES French 2 - Considering {} of {} postcodes".format(len(priority_postcodes), len(remaining_postcodes)))
 
         # Add all the postcodes together
         list_postcodes = priority_postcodes + remaining_postcodes
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density)
-        
+
     elif results.co_coverage_obligation_type in ['cov_ob_4']: # SPAIN
         all_postcodes = sorted(system.postcode_sectors.values(), key=lambda pcd: pcd.population_density)
         priority_postcodes, main_postcodes, remaining_postcodes, pop_covered  = [], [], [], 0
-        
+
         # Select postcodes according to population
         for pcd in all_postcodes:
             if pcd.population < results.co_population_limit:
                 main_postcodes.append(pcd)
             else:
                 remaining_postcodes.append(pcd)
-        
+
         population = sum(pcd.population for pcd in all_postcodes)
         target_pop = population * results.co_percentage_covered
 
@@ -538,26 +512,26 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
                 priority_postcodes.append(pcd)
             else:
                 remaining_postcodes.append(pcd)
-                    
-                    
+
+
         # Change the order to start investing in the most profitable ones
         priority_postcodes = sorted(priority_postcodes, key=lambda pcd: -pcd.population_density)
-        remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)            
-        
+        remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)
+
          # Add all the postcodes together
         list_postcodes = priority_postcodes + remaining_postcodes
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density)
-        
-        
-    elif results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']:   
+
+
+    elif results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']:
         list_postcodes = sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density)
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density)
-        
+
     elif results.co_coverage_obligation_type in ['cov_ob_3']:    # GERMANY
         list_postcodes = sorted(system.postcode_sectors.values(), key=lambda pcd: pcd.population_density)
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: lad.population_density)
-        
-        
+
+
     for pcd in list_postcodes:
         previous_pop1 = chart1.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, TIMESTEPS, previous_pop1)
         previous_pop2 = chart2.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, previous_pop2)
@@ -567,7 +541,7 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
     for lad in list_lads:
         previous_pop1_lad = chart1_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop1_lad)
         previous_pop2_lad = chart2_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, previous_pop2_lad)
-        previous_pop3_lad = chart3_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop3_lad)                
+        previous_pop3_lad = chart3_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop3_lad)
         previous_pop4_lad = chart4_lads.add_initial_info(lad.id, lad.name, lad.population, lad.population_density, TIMESTEPS, previous_pop4_lad)
 
 
@@ -577,14 +551,14 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
 # - run over population scenario / demand scenario / intervention strategy combinations
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
-results = Results(OUTPUT_FOLDER)
+results = Results(OUTPUT_FOLDER, SHAPEFILE_PATH)
 
 for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
     print('----------------------------------')
     print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
     assets = initial_system[:]
     index = save_data._get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-    
+
     results.chart1_add_table(index)
     results.chart2_add_table(index)
     results.chart3_add_table(index)
@@ -596,7 +570,7 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     results.chart3_lads_add_table(index)
     results.chart4_lads_add_table(index)
     results.chart5_lads_add_table(index)
-    
+
     chart1 = results.chart_1[index]
     chart2 = results.chart_2[index]
     chart3 = results.chart_3[index]
@@ -614,14 +588,14 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     results.co_population_limit_boolean = COVERAGE_OBLIGATIONS[coverage_obligation_type]['population_limit_boolean']
     results.co_population_limit = COVERAGE_OBLIGATIONS[coverage_obligation_type]['population_limit']
     results.co_deploiement_prioritaire = COVERAGE_OBLIGATIONS[coverage_obligation_type]['deploiement_prioritaire']
-    results.co_budget_limit = COVERAGE_OBLIGATIONS[coverage_obligation_type]['budget_limit'] 
+    results.co_budget_limit = COVERAGE_OBLIGATIONS[coverage_obligation_type]['budget_limit']
     results.co_descending_order = COVERAGE_OBLIGATIONS[coverage_obligation_type]['descending_order']
     results.co_percentage_covered = COVERAGE_OBLIGATIONS[coverage_obligation_type]['percentage_covered']
     results.co_invest_by_demand = COVERAGE_OBLIGATIONS[coverage_obligation_type]['invest_by_demand']
-    
+
     results.co_percentage_covered_all[coverage_obligation_type] = results.co_percentage_covered
-    
-    
+
+
     for year in TIMESTEPS:
         print("-", year)
 #        input ("Press enter")
@@ -631,7 +605,7 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
             pcd_sector["population"] = population_by_scenario_year_pcd[pop_scenario][year][pcd_sector_id]
             pcd_sector["user_throughput_GB"] = user_throughput_by_scenario_year_GB[throughput_scenario][year]
             pcd_sector["user_throughput_mbps"] = user_throughput_by_scenario_year_mbps['low'][year] # Fixed to 2Mbps
-            
+
         # Decide on new interventions
         budget = ANNUAL_BUDGET
         service_obligation_capacity = COVERAGE_OBLIGATIONS[coverage_obligation_type]['coverage_obligation'][coverage_scenario]
@@ -641,16 +615,16 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
             system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity)
             _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads)
             results.population_2020 = system.population
-            
+
         # decide
         interventions_built, budget, spend, results = decide_interventions(intervention_strategy, budget, service_obligation_capacity, system, year, results, index)
 
         # accumulate decisions
         assets += interventions_built
-               
+
         # simulate with decisions
         system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity)
-        
+
         # Fill capacity margins per year
         for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
             chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin) # Capacity_margin
@@ -660,16 +634,16 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
         for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
             chart2_lads.add_cap_margin(lad.id, year, lad.capacity_margin) # Capacity_margin
             chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage()) # Fill capacity, demand and population covered per year
-        
+
         chart5.add_initial_info(results, system, index, year)
-        
+
 #        cost_by_lad = defaultdict(int)
 #        cost_by_pcd = defaultdict(int)
 #
 #        for pcd, lad, item, cost in spend:
 #            cost_by_lad[lad] += cost
 #            cost_by_pcd[pcd] += cost
-    
+
 
     chart5.calculate_aggregated_elements(results, TIMESTEPS)
     chart5.get_all_values()
@@ -684,9 +658,5 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     save_data.write_chart_2_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
     save_data.write_chart_3_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
     save_data.write_chart_4_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    
+
 save_data.write_general_charts(system, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER)
-
-
-
-
