@@ -5,10 +5,10 @@
 
 *(click on the 'docs' button to get directed to the full model documentation)*
 
-**The Cambridge Communications Assessment Model** currently focuses on 
-the mobile sector to provide analytics for 
-decision-makers on (i) capacity-demand and (ii) risk, vulnerability 
-and resilience. The fixed, wireless and satellite sectors are currently under development. 
+**The Cambridge Communications Assessment Model** currently focuses on
+the mobile sector to provide analytics for
+decision-makers on (i) capacity-demand and (ii) risk, vulnerability
+and resilience. The fixed, wireless and satellite sectors are currently under development.
 
 ## Setup and configuration
 
@@ -16,11 +16,17 @@ All code is written in Python (Python>=3.5), avoiding external dependencies.
 
 ## A word from our sponsors
 
-**The Cambridge Communications Assessment Model** was written and 
-developed at the [Judge Business School](http://www.jbs.cam.ac.uk/home/), 
-[University of Cambridge](http://www.cam.ac.uk/) and at the [Environmental Change Institute](http://www.eci.ox.ac.uk/), 
-[University of Oxford](https://www.ox.ac.uk/) within the EPSRC-sponsored MISTRAL programme, 
+**The Cambridge Communications Assessment Model** was written and
+developed at the [Judge Business School](http://www.jbs.cam.ac.uk/home/),
+[University of Cambridge](http://www.cam.ac.uk/) and at the [Environmental Change Institute](http://www.eci.ox.ac.uk/),
+[University of Oxford](https://www.ox.ac.uk/) within the EPSRC-sponsored MISTRAL programme,
 as part of the [Infrastructure Transition Research Consortium](http://www.itrc.org.uk/).
+
+## Install packages
+
+In order to use this code, install the following packages:
+
+    matplotlib, numpy, pyshp, basemap
 
 ## Install
 
