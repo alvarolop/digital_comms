@@ -124,31 +124,35 @@ def plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, table_name,
     ax.set_title(title)
     
     # Create the X axis according to the population of the first option
-    if(table_name == 'chart1_pcd'):
-        chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
-    elif (table_name == 'chart1_lad'):
-        chart = results.chart1_lads_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
-    else:
-        chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
-        
-#    x_values = [value[0] for key,value in chart._table.items()]  
-#    x_numbers = np.linspace(0,100,len(x_values))
+#    if(table_name == 'chart1_pcd'):
+    chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
+#    elif (table_name == 'chart1_lad'):
+#        chart = results.chart1_lads_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
+#    else:
+#        chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
 
+    
     for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
         index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
         nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-        if(table_name == 'chart1_pcd'):
-            chart = results.chart1_get_table(index)
-        elif (table_name == 'chart1_lad'):
-            chart = results.chart1_lads_get_table(index)
-        else:
-            chart = results.chart1_get_table(index)
+#        if(table_name == 'chart1_pcd'):
+        chart = results.chart1_get_table(index)
+#        elif (table_name == 'chart1_lad'):
+#            chart = results.chart1_lads_get_table(index)
+#        else:
+#            chart = results.chart1_get_table(index)
         
 #        y_values = [value[7] for key,value in chart._table.items()]
         
         x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, coverage_obligation_type)
 
         ax.plot(x_values, y_values, label=nice_index)
+        
+        
+    # Plot the chart until 100%
+    y_values = np.linspace(0,results.population_2020,1000)
+    x_values = np.linspace(0,100,1000)
+    ax.plot(x_values, y_values, alpha=0)
         
     fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
     xticks = mtick.FormatStrFormatter(fmt)
@@ -173,13 +177,10 @@ def plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, table_name,
 
 def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, c_o_type = None):
     
-#    if (c_o_type == None):
-#        x_values = np.linspace(0,100,plot_points)
     y_limits = np.linspace(0,results.population_2020,plot_points)
-#    else:
-#        x_values = np.linspace(0,100*results.co_percentage_covered_all[c_o_type],plot_points*results.co_percentage_covered_all[c_o_type])
-#        y_limits = np.linspace(0,results.population_2020,plot_points*results.co_percentage_covered_all[c_o_type])
     y_values = [] # La lista que voy a rellenar con los puntos Y. Tendrá la misma dimensión que y_limits
+  
+    
     
 #    not_reached = 0
     for pop_limit in y_limits: # Relleno y_values buscando en los límites uno a uno.
@@ -199,9 +200,9 @@ def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg
             previous_item = value
 #                    not_reached += 1
     print ("This is the limit: {}, {}".format (len(y_values),len(y_limits)))
-    x_values = np.linspace(0, 100 * (len(y_values) / len(y_limits)), plot_points * (len(y_values) / len(y_limits)))
     
-#    adjust = [0] * (len(x_values) - len(y_limits))
+    x_values = np.linspace(0, 100 * (len(y_values) / len(y_limits)), len(y_values))
+    
     return x_values, y_values
 
 

@@ -106,19 +106,19 @@ else:
 #    print('USING QUICK VERSION')
     RUN_OPTIONS = [
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
+#        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
+#        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+#        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
+#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
@@ -137,7 +137,7 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': True,
+        'invest_by_demand': False,
         'percentage_covered': 1,
         'coverage_obligation': {
                 'low': 2,
@@ -153,7 +153,7 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0.30,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': True, #
+        'invest_by_demand': False, #
         'percentage_covered': 1, # This does not do anything
         'coverage_obligation': {
                 'low': 2,
@@ -169,7 +169,7 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': False,
-        'invest_by_demand': True, #
+        'invest_by_demand': False, #
         'percentage_covered': 0.90,
         'coverage_obligation': {
                 'low': 2,
@@ -185,7 +185,7 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': True, #
+        'invest_by_demand': False, #
         'percentage_covered': 0.90,
         'coverage_obligation': {
                 'low': 2,
@@ -201,7 +201,7 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': True, #
+        'invest_by_demand': False, #
         'percentage_covered': 0.95,
         'coverage_obligation': {
                 'low': 2,
@@ -629,6 +629,7 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
         for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
             chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin) # Capacity_margin
             chart4.add_cap_and_demand(pcd.id, year, pcd.capacity, pcd.demand) # Fill capacity, demand and population covered per year
+            chart1.add_population_covered(pcd.id, year, pcd.capacity, pcd.demand, pcd.population)
 
         # Fill capacity margins per year
         for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
@@ -636,14 +637,6 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
             chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage()) # Fill capacity, demand and population covered per year
 
         chart5.add_initial_info(results, system, index, year)
-
-#        cost_by_lad = defaultdict(int)
-#        cost_by_pcd = defaultdict(int)
-#
-#        for pcd, lad, item, cost in spend:
-#            cost_by_lad[lad] += cost
-#            cost_by_pcd[pcd] += cost
-
 
     chart5.calculate_aggregated_elements(results, TIMESTEPS)
     chart5.get_all_values()

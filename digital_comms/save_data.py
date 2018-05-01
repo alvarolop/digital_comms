@@ -144,13 +144,16 @@ def write_chart_1(ict_manager, coverage_obligation_type, pop_scenario, throughpu
 
     metrics_file = open(metrics_filename, 'w', newline='')
     metrics_writer = csv.writer(metrics_file)
-    metrics_writer.writerow(('postcode', 'postcode_lad', 'population', 'population_density', 'population_sum', 'cost', 'cost_sum', prefix + 'year_2020', prefix + 'year_2021', prefix + 'year_2022', prefix + 'year_2023', prefix + 'year_2024', prefix + 'year_2025', prefix + 'year_2026', prefix + 'year_2027', prefix + 'year_2028', prefix + 'year_2029', prefix + 'year_2030'))
+    metrics_writer.writerow(('postcode', 'postcode_lad', 'population', 'population_density', 'population_sum', 'population_covered', 'population_covered_sum', 'cost', 'cost_sum', prefix + 'year_2020', prefix + 'year_2021', prefix + 'year_2022', prefix + 'year_2023', prefix + 'year_2024', prefix + 'year_2025', prefix + 'year_2026', prefix + 'year_2027', prefix + 'year_2028', prefix + 'year_2029', prefix + 'year_2030'))
 
     previous_cost = 0;
+    previous_pop_covered = 0;
     for key, value in chart._table.items():
         previous_cost += value[5];
-        metrics_writer.writerow((value[0], value[1], value[2], value[3], value[6], value[5], previous_cost, value[4][2020],value[4][2021],value[4][2022],value[4][2023], value[4][2024],value[4][2025],value[4][2026],value[4][2027],value[4][2028],value[4][2029],value[4][2030]))
+        previous_pop_covered += value[8]
+        metrics_writer.writerow((value[0], value[1], value[2], value[3], value[6], value[8], previous_pop_covered, value[5], previous_cost, value[4][2020],value[4][2021],value[4][2022],value[4][2023], value[4][2024],value[4][2025],value[4][2026],value[4][2027],value[4][2028],value[4][2029],value[4][2030]))
         chart.add_aggregated_cost(value[0], previous_cost)
+        chart.add_aggregated_population_covered(value[0], previous_pop_covered)
     metrics_file.close()
     
     # Plotting
@@ -280,17 +283,17 @@ def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 #    print('- Ploting Chart 1 LADs...Total cost per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['LADs'], 'lad_chart_1_cost_per_year_all', suffix)  
 #    
-    # Maps
-    print('- Drawing Chart 1 LADs...Population')
-    maps.print_map(chart, "Population", 2, results, 'lad_chart_1_population', suffix, 'Blues')
-    print('- Drawing Chart 1 LADs...Population density')
-    maps.print_map(chart, "Population density", 3, results, 'lad_chart_1_population_density', suffix, 'Blues')
-    print('- Drawing Chart 1 LADs...Total cost')
-    maps.print_map(chart, "Total cost", 5, results, 'lad_chart_1_aggregated_cost', suffix, 'OrRd')
-    print('- Drawing Chart 1 LADs...Total cost during all years')
-    maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, results, 'lad_chart_1_cost_per_year', suffix, 'OrRd')
-#    print('- Drawing Chart 1 LADs...Total cost per year')
-#    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
+#    # Maps
+#    print('- Drawing Chart 1 LADs...Population')
+#    maps.print_map(chart, "Population", 2, results, 'lad_chart_1_population', suffix, 'Blues')
+#    print('- Drawing Chart 1 LADs...Population density')
+#    maps.print_map(chart, "Population density", 3, results, 'lad_chart_1_population_density', suffix, 'Blues')
+#    print('- Drawing Chart 1 LADs...Total cost')
+#    maps.print_map(chart, "Total cost", 5, results, 'lad_chart_1_aggregated_cost', suffix, 'OrRd')
+#    print('- Drawing Chart 1 LADs...Total cost during all years')
+#    maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, results, 'lad_chart_1_cost_per_year', suffix, 'OrRd')
+##    print('- Drawing Chart 1 LADs...Total cost per year')
+##    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
 
     
     
@@ -316,13 +319,13 @@ def write_chart_2_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 #    print('- Ploting Chart 2 LADs...Capacity margin per year')
 #    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['LADs'], 'lad_chart_2_cap_margin_per_year_all', suffix)  
 
-    # Maps
-    print('- Drawing Chart 2 LADs...Capacity margin during all years')
-    maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
-#    print('- Drawing Chart 2 LADs...Capacity margin per year')
-#    maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_year', suffix, 'RdYlGn') # OrRd
-    
-    
+#    # Maps
+#    print('- Drawing Chart 2 LADs...Capacity margin during all years')
+#    maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
+##    print('- Drawing Chart 2 LADs...Capacity margin per year')
+##    maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_year', suffix, 'RdYlGn') # OrRd
+#    
+#    
     
 def write_chart_3_LADs(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
     print('-> Chart 3 LADs...')
@@ -421,7 +424,7 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
     
     # Plotting    
     print('- Ploting cost comparison per strategy')
-    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_pcd', 2, 6, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], 'pcd_1_cost_comparison_per_strategy')  
+    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_pcd', 8, 9, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], 'pcd_1_cost_comparison_per_strategy')  
     
 #    # Print summary data
 #    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:

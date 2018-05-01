@@ -4,7 +4,7 @@
 from digital_comms.ccam import PostcodeSector
 
 import copy
-import pprint
+#import pprint
 
 ################################################################
 # EXAMPLE COST LOOKUP TABLE

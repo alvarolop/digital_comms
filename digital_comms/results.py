@@ -182,7 +182,7 @@ class Chart1(object):
     https://docs.python.org/3.6/library/collections.html#collections.OrderedDict
     http://www.physics.nyu.edu/pine/pymanual/html/chap3/chap3_arrays.html
 
-    [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {costs per year}, cost, population_sum, cost_sum]
+    [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {costs per year}, cost, population_sum, cost_sum, pop_covered_2030, pop_covered_agg_2030, {pop_covered_per_year}]
     """
     def __init__(self):
         self._table = collections.OrderedDict()
@@ -207,12 +207,13 @@ class Chart1(object):
         print("----")
 
     def add_initial_info(self, pcd_id, pcd_lad_id, pcd_population, pcd_population_density, timesteps, previous_pop):
-        self._table[pcd_id] = [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {}, 0, 0, 0]
+        self._table[pcd_id] = [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {}, 0, 0, 0, 0, 0, {}]
 #        self._table[pcd_id][6] += sum([value[2] for key,value in self._table.items()])
         self._table[pcd_id][6] = pcd_population + previous_pop
 
         for year in timesteps:
             self._table[pcd_id][4][year] = 0
+            self._table[pcd_id][10][year] = 0
         return self._table[pcd_id][6]
 
     def add_cost(self, key, year, value):
@@ -228,6 +229,14 @@ class Chart1(object):
         else:
             print ("Error: {} key was not there!", key)
 
+    def add_population_covered(self, key, year, capacity, demand, population):
+#        self._table[key][8] += min (capacity / demand, 1) * population
+        if year == 2030:
+            self._table[key][8] += min (capacity / demand, 1) * population
+        self._table[key][10][year] += min (capacity / demand, 1) * population
+        
+    def add_aggregated_population_covered(self, key, value):
+        self._table[key][9] += value
 
 
 class Chart1_LADS(object):
@@ -274,6 +283,8 @@ class Chart1_LADS(object):
             self._table[key][7] += value
         else:
             print ("Error: {} key was not there!", key)
+            
+
 
 
 class Chart2(object):
