@@ -156,17 +156,18 @@ def write_chart_1(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         chart.add_aggregated_population_covered(value[0], previous_pop_covered)
     metrics_file.close()
     
-    # Plotting
-    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
-    plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'pcd_chart_1_cost', suffix)
-    
-#    print('- Ploting Chart 1 PCDs...Total population and cost')
-#    plots.plot_chart_comparison(ict_manager, results, chart, 6, [2,5], "Total population and cost per PCD", ['PCDs', 'Population', 'Cost'], 'pcd_chart_1_population_cost', suffix)
-#    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
-#    plots.plot_chart_comparison(ict_manager, results, chart, 6, [6,7], "Total population and cost aggregated", ['PCDs', 'Population', 'Cost'], 'pcd_chart_1_aggregated_population_cost', suffix)
-    print('- Ploting Chart 1 PCDs...Total cost per year')
-    plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['PCDs'], 'pcd_chart_1_cost_per_year_all', suffix)  
-    
+    if (False):
+        # Plotting
+        print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
+        plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'pcd_chart_1_cost', suffix)
+        
+    #    print('- Ploting Chart 1 PCDs...Total population and cost')
+    #    plots.plot_chart_comparison(ict_manager, results, chart, 6, [2,5], "Total population and cost per PCD", ['PCDs', 'Population', 'Cost'], 'pcd_chart_1_population_cost', suffix)
+    #    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
+    #    plots.plot_chart_comparison(ict_manager, results, chart, 6, [6,7], "Total population and cost aggregated", ['PCDs', 'Population', 'Cost'], 'pcd_chart_1_aggregated_population_cost', suffix)
+        print('- Ploting Chart 1 PCDs...Total cost per year')
+        plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['PCDs'], 'pcd_chart_1_cost_per_year_all', suffix)  
+        
     
     
     
@@ -189,10 +190,11 @@ def write_chart_2(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         
     metrics_file.close()
     
-    # Plotting
-    print('- Ploting Chart 2 PCDs...Capacity margin per year')
-    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'], 'pcd_chart_2_cap_margin_per_year_all', suffix)  
-    
+    if (False):
+        # Plotting
+        print('- Ploting Chart 2 PCDs...Capacity margin per year')
+        plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'], 'pcd_chart_2_cap_margin_per_year_all', suffix)  
+        
 
     
     
@@ -274,26 +276,26 @@ def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
         chart.add_aggregated_cost(value[0], previous_cost)
     metrics_file.close()
 
-    
-    # Plotting
-#    print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
-#    plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'lad_chart_1_cost', suffix)
-#    
-#    
-#    print('- Ploting Chart 1 LADs...Total cost per year')
-#    plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['LADs'], 'lad_chart_1_cost_per_year_all', suffix)  
-#    
-#    # Maps
-#    print('- Drawing Chart 1 LADs...Population')
-#    maps.print_map(chart, "Population", 2, results, 'lad_chart_1_population', suffix, 'Blues')
-#    print('- Drawing Chart 1 LADs...Population density')
-#    maps.print_map(chart, "Population density", 3, results, 'lad_chart_1_population_density', suffix, 'Blues')
-#    print('- Drawing Chart 1 LADs...Total cost')
-#    maps.print_map(chart, "Total cost", 5, results, 'lad_chart_1_aggregated_cost', suffix, 'OrRd')
-#    print('- Drawing Chart 1 LADs...Total cost during all years')
-#    maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, results, 'lad_chart_1_cost_per_year', suffix, 'OrRd')
-##    print('- Drawing Chart 1 LADs...Total cost per year')
-##    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
+    if (False):
+        # Plotting
+        print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
+        plots.plot_chart(ict_manager, results, chart, 2, 6, 5, 7, "Cost", ['% Population covered', 'Cost'], 'lad_chart_1_cost', suffix)
+        
+        
+        print('- Ploting Chart 1 LADs...Total cost per year')
+        plots.plot_chart_per_year(ict_manager, results, chart, 6, [4], TIMESTEPS, "Total cost per year", ['LADs'], 'lad_chart_1_cost_per_year_all', suffix)  
+        
+        # Maps
+        print('- Drawing Chart 1 LADs...Population')
+        maps.print_map(chart, "Population", 2, results, 'lad_chart_1_population', suffix, 'Blues')
+        print('- Drawing Chart 1 LADs...Population density')
+        maps.print_map(chart, "Population density", 3, results, 'lad_chart_1_population_density', suffix, 'Blues')
+        print('- Drawing Chart 1 LADs...Total cost')
+        maps.print_map(chart, "Total cost", 5, results, 'lad_chart_1_aggregated_cost', suffix, 'OrRd')
+        print('- Drawing Chart 1 LADs...Total cost during all years')
+        maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, results, 'lad_chart_1_cost_per_year', suffix, 'OrRd')
+    #    print('- Drawing Chart 1 LADs...Total cost per year')
+    #    maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
 
     
     
@@ -315,17 +317,18 @@ def write_chart_2_LADs(ict_manager, coverage_obligation_type, pop_scenario, thro
 
     metrics_file.close()
 
-#    # Plotting
-#    print('- Ploting Chart 2 LADs...Capacity margin per year')
-#    plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['LADs'], 'lad_chart_2_cap_margin_per_year_all', suffix)  
-
-#    # Maps
-#    print('- Drawing Chart 2 LADs...Capacity margin during all years')
-#    maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
-##    print('- Drawing Chart 2 LADs...Capacity margin per year')
-##    maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_year', suffix, 'RdYlGn') # OrRd
-#    
-#    
+    if (False):
+        # Plotting
+        print('- Ploting Chart 2 LADs...Capacity margin per year')
+        plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['LADs'], 'lad_chart_2_cap_margin_per_year_all', suffix)  
+    
+        # Maps
+        print('- Drawing Chart 2 LADs...Capacity margin during all years')
+        maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_per_year', suffix, 'RdYlGn')
+    #    print('- Drawing Chart 2 LADs...Capacity margin per year')
+    #    maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, 'lad_chart_2_cap_margin_year', suffix, 'RdYlGn') # OrRd
+        
+    
     
 def write_chart_3_LADs(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
     print('-> Chart 3 LADs...')
@@ -424,7 +427,13 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
     
     # Plotting    
     print('- Ploting cost comparison per strategy')
-    plots.plot_several_lines(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 'chart1_pcd', 8, 9, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], 'pcd_1_cost_comparison_per_strategy')  
+    plots.plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 8, 9, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], '1_cost_comparison_per_strategy')  
+    print('- Ploting % population covered comparison per strategy and year')
+    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "% population covered per strategy", ['Time','% population'], '5_population_covered_per_strategy')  
+    print('- Ploting capacity margin histogram')
+    plots.plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "Capacity margin histogram", ['Frequency','Capacity margin'], '3_capacity_margin_histogram')  
+      
+    
     
 #    # Print summary data
 #    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:

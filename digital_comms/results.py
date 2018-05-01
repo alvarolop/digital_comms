@@ -31,6 +31,7 @@ class Results:
         self.co_budget_limit = None #= True # True is the default value
         self.co_descending_order = None #= True # True is the default value, investing in higher valuable pcds first
         self.co_invest_by_demand = None
+        self.co_coverage_obligation = None
 
         self.co_percentage_covered_all = {}
 

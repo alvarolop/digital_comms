@@ -106,19 +106,19 @@ else:
 #    print('USING QUICK VERSION')
     RUN_OPTIONS = [
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
@@ -137,11 +137,11 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': False,
+        'invest_by_demand': True,
         'percentage_covered': 1,
         'coverage_obligation': {
-                'low': 2,
-                'baseline': 5,
+                'low': 1,
+                'baseline': 2,
                 'high': 8
         },
     },
@@ -153,11 +153,11 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0.30,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': False, #
+        'invest_by_demand': True, #
         'percentage_covered': 1, # This does not do anything
         'coverage_obligation': {
-                'low': 2,
-                'baseline': 5,
+                'low': 1,
+                'baseline': 2,
                 'high': 8
         },
     },
@@ -169,11 +169,11 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': False,
-        'invest_by_demand': False, #
+        'invest_by_demand': True, #
         'percentage_covered': 0.90,
         'coverage_obligation': {
-                'low': 2,
-                'baseline': 5,
+                'low': 1,
+                'baseline': 2,
                 'high': 8
         },
     },
@@ -185,11 +185,11 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': False, #
+        'invest_by_demand': True, #
         'percentage_covered': 0.90,
         'coverage_obligation': {
-                'low': 2,
-                'baseline': 5,
+                'low': 1,
+                'baseline': 2,
                 'high': 8
         },
     },
@@ -201,11 +201,11 @@ COVERAGE_OBLIGATIONS = {
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': False, #
+        'invest_by_demand': True, #
         'percentage_covered': 0.95,
         'coverage_obligation': {
-                'low': 2,
-                'baseline': 5,
+                'low': 1,
+                'baseline': 2,
                 'high': 8
         },
     },
@@ -592,6 +592,8 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     results.co_descending_order = COVERAGE_OBLIGATIONS[coverage_obligation_type]['descending_order']
     results.co_percentage_covered = COVERAGE_OBLIGATIONS[coverage_obligation_type]['percentage_covered']
     results.co_invest_by_demand = COVERAGE_OBLIGATIONS[coverage_obligation_type]['invest_by_demand']
+    results.co_coverage_obligation = COVERAGE_OBLIGATIONS[coverage_obligation_type]['coverage_obligation']
+
 
     results.co_percentage_covered_all[coverage_obligation_type] = results.co_percentage_covered
 
