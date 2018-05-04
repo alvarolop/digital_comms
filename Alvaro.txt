@@ -71,4 +71,9 @@ git commit -m "Your commit message"
 git push 
 
 
+git config --global user.email "alvarolop.medina@gmail.com"
+git config --global user.name "alvarolop"
+
+
+
 

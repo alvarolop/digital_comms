@@ -429,9 +429,11 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
     print('- Ploting cost comparison per strategy')
     plots.plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 8, 9, 5, 7, "Total cost comparison per strategy", ['Population Covered','Cost (£)'], '1_cost_comparison_per_strategy')  
     print('- Ploting % population covered comparison per strategy and year')
-    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "% population covered per strategy", ['Time','% population'], '5_population_covered_per_strategy')  
+    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "% population covered per strategy", ['Time','% population'], True, '2_population_covered_per_strategy')  
+    print('- Ploting Capacity margin per strategy and year')
+    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin per strategy", ['Time','Capacity margin'], False, '3_capacity_margin_per_strategy')  
     print('- Ploting capacity margin histogram')
-    plots.plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "Capacity margin histogram", ['Frequency','Capacity margin'], '3_capacity_margin_histogram')  
+    plots.plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin histogram", ['Capacity margin','Frequency'], '4_capacity_margin_histogram')  
       
     
     

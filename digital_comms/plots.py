@@ -4,9 +4,14 @@ PLOT FUNCTION
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import matplotlib.mlab as mlab
 
-import plotly.plotly as py
-import plotly.graph_objs as go
+
+#import numpy as np
+#import matplotlib.pyplot as plt
+
+#import plotly.plotly as py
+#import plotly.graph_objs as go
 
 from collections import OrderedDict
 import os
@@ -160,7 +165,7 @@ def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 
     plt.close(fig)
     
     
-def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, name):
+def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, y_percentage_boolean, name):
     metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
     
     # Set Axis and Title
@@ -180,10 +185,11 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
         x_values = [value[col_time] for key,value in chart._table.items()]  
 
         ax.plot(x_values, y_values, label=nice_index)
-        
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    yticks = mtick.FormatStrFormatter(fmt)
-    ax.yaxis.set_major_formatter(yticks)
+    
+    if (y_percentage_boolean):
+        fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+        yticks = mtick.FormatStrFormatter(fmt)
+        ax.yaxis.set_major_formatter(yticks)
     
     # Shrink current axis's height by 50% on the bottom
     box = ax.get_position()
@@ -198,6 +204,12 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
 
 def plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, name):
     metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
+    
+#    https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.histogram.html
+#    https://matplotlib.org/gallery/statistics/hist.html
+#    https://matplotlib.org/1.2.1/examples/pylab_examples/histogram_demo.html
+#    https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html#matplotlib.pyplot.hist
+#    https://matplotlib.org/tutorials/introductory/pyplot.html#sphx-glr-tutorials-introductory-pyplot-py
     
     # Set Axis and Title
     fig = plt.figure()
@@ -214,17 +226,33 @@ def plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, c
         
         y_values = [value[col_value] * 100 for key,value in chart._table.items()]
         x_values = [value[col_time] for key,value in chart._table.items()]  
-
-        x = np.random.randn(500)
-        data = [go.Histogram(x=x_values)]
         
-        py.iplot(data, filename=metrics_filename)
+        # the histogram of the data
+        n, bins, patches = plt.hist(y_values, 200, density=True, facecolor='g', alpha=0.75)
+        
+        
+#        plt.xlabel('Smarts')
+#        plt.ylabel('Probability')
+#        plt.title('Histogram of IQ')
+#        ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
+#        ax.axis([40, 160, 0, 0.03])
+        ax.grid(True)
+        
+        # add a 'best fit' line
+#        y = mlab.normpdf( bins, mu, sigma)
+#        l = ax.plot(bins, y, 'r--', linewidth=1)
+#        ax.show()
+
+#        x = np.random.randn(500)
+#        data = [go.Histogram(x=x_values)]
+        
+#        py.iplot(data, filename=metrics_filename)
 #        ax.plot(x_values, y_values, label=nice_index)
         break
     
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    yticks = mtick.FormatStrFormatter(fmt)
-    ax.yaxis.set_major_formatter(yticks)
+#    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+#    yticks = mtick.FormatStrFormatter(fmt)
+#    ax.yaxis.set_major_formatter(yticks)
     
     # Shrink current axis's height by 50% on the bottom
     box = ax.get_position()
@@ -285,7 +313,7 @@ def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, cov
 
 def _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results):
     
-    dict_cov_ob = {'cov_ob_1': 'Custom', 'cov_ob_2': 'France', 'cov_ob_3': 'Germany', 'cov_ob_4': 'Spain', 'cov_ob_5': 'The UK'}
+    dict_cov_ob = {'cov_ob_1': 'Custom   ', 'cov_ob_2': 'France    ', 'cov_ob_3': 'Germany', 'cov_ob_4': 'Spain      ', 'cov_ob_5': 'The UK   '}
 #    dict_cov_ob_speed = {'low': '2 mbps', 'baseline': '5 mbps', 'high': '8 mbps'}
     suffix = '{}, Pop: {}, Throughput: {}, C.O.: {} mbps, Strategy: {}'.format(dict_cov_ob.get(coverage_obligation_type,'new obligation'), pop_scenario, throughput_scenario, results.co_coverage_obligation.get(coverage_scenario, 'X'), intervention_strategy)
     # for length, use 'base' for baseline scenarios
