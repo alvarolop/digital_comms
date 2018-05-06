@@ -122,6 +122,32 @@ def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps
     plt.close(fig)
     
     
+def plot_histogram(ict_manager, results, chart, TIMESTEPS, col_time, col_value, title, ax_names, name, index):
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)    
+
+    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+    ax = fig.subplots()
+    
+    ax.set_xlabel(ax_names[0])
+    ax.set_ylabel(ax_names[1])
+    ax.set_title(title)
+    ax.grid(True)
+        
+    values = [value[col_value][2030] * 100 for key,value in chart._table.items()]
+    
+    # the histogram of the data
+    # https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html
+    n, bins, patches = plt.hist(values, bins=200, range=(-max(values),max(values)), density=True, facecolor='g', alpha=0.75)
+    
+    
+#    ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
+#    ax.axis([40, 160, 0, 0.03])
+    
+    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+    plt.close(fig)
+
+    
+    
 def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_pop, col_pop_agg, col_value, col_value_agg, title, ax_names, name):
     metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
     
@@ -132,6 +158,7 @@ def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 
     ax.set_xlabel(ax_names[0])
     ax.set_ylabel(ax_names[1])
     ax.set_title(title)
+    ax.grid(True)
     
 #    chart = results.chart1_get_table(_get_suffix(RUN_OPTIONS[0][3],RUN_OPTIONS[0][0],RUN_OPTIONS[0][1],RUN_OPTIONS[0][2],RUN_OPTIONS[0][4]))
 
@@ -175,6 +202,7 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
     ax.set_xlabel(ax_names[0])
     ax.set_ylabel(ax_names[1])
     ax.set_title(title)
+    ax.grid(True)
     
     for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
         index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
@@ -202,67 +230,67 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
     plt.close(fig)
 
 
-def plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, name):
-    metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
-    
-#    https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.histogram.html
-#    https://matplotlib.org/gallery/statistics/hist.html
-#    https://matplotlib.org/1.2.1/examples/pylab_examples/histogram_demo.html
-#    https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html#matplotlib.pyplot.hist
-#    https://matplotlib.org/tutorials/introductory/pyplot.html#sphx-glr-tutorials-introductory-pyplot-py
-    
-    # Set Axis and Title
-    fig = plt.figure()
-    ax = plt.subplot(111)
-    
-    ax.set_xlabel(ax_names[0])
-    ax.set_ylabel(ax_names[1])
-    ax.set_title(title)
-    
-    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
-        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results)
-        chart = results.chart5_get_table(index)
-        
-        y_values = [value[col_value] * 100 for key,value in chart._table.items()]
-        x_values = [value[col_time] for key,value in chart._table.items()]  
-        
-        # the histogram of the data
-        n, bins, patches = plt.hist(y_values, 200, density=True, facecolor='g', alpha=0.75)
-        
-        
-#        plt.xlabel('Smarts')
-#        plt.ylabel('Probability')
-#        plt.title('Histogram of IQ')
-#        ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
-#        ax.axis([40, 160, 0, 0.03])
-        ax.grid(True)
-        
-        # add a 'best fit' line
-#        y = mlab.normpdf( bins, mu, sigma)
-#        l = ax.plot(bins, y, 'r--', linewidth=1)
-#        ax.show()
-
-#        x = np.random.randn(500)
-#        data = [go.Histogram(x=x_values)]
-        
-#        py.iplot(data, filename=metrics_filename)
-#        ax.plot(x_values, y_values, label=nice_index)
-        break
-    
-#    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-#    yticks = mtick.FormatStrFormatter(fmt)
-#    ax.yaxis.set_major_formatter(yticks)
-    
-    # Shrink current axis's height by 50% on the bottom
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0 + box.height * 0.5, box.width, box.height * 0.5])
-    
-    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
-           handletextpad=0.0, fancybox=True, shadow=True, fontsize='small')
-    
-    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    plt.close(fig)
+#def plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, name):
+#    metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
+#    
+##    https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.histogram.html
+##    https://matplotlib.org/gallery/statistics/hist.html
+##    https://matplotlib.org/1.2.1/examples/pylab_examples/histogram_demo.html
+##    https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html#matplotlib.pyplot.hist
+##    https://matplotlib.org/tutorials/introductory/pyplot.html#sphx-glr-tutorials-introductory-pyplot-py
+#    
+#    # Set Axis and Title
+#    fig = plt.figure()
+#    ax = plt.subplot(111)
+#    
+#    ax.set_xlabel(ax_names[0])
+#    ax.set_ylabel(ax_names[1])
+#    ax.set_title(title)
+#    
+#    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+#        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+#        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results)
+#        chart = results.chart5_get_table(index)
+#        
+#        y_values = [value[col_value] * 100 for key,value in chart._table.items()]
+#        x_values = [value[col_time] for key,value in chart._table.items()]  
+#        
+#        # the histogram of the data
+#        n, bins, patches = plt.hist(y_values, 200, density=True, facecolor='g', alpha=0.75)
+#        
+#        
+##        plt.xlabel('Smarts')
+##        plt.ylabel('Probability')
+##        plt.title('Histogram of IQ')
+##        ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
+##        ax.axis([40, 160, 0, 0.03])
+#        ax.grid(True)
+#        
+#        # add a 'best fit' line
+##        y = mlab.normpdf( bins, mu, sigma)
+##        l = ax.plot(bins, y, 'r--', linewidth=1)
+##        ax.show()
+#
+##        x = np.random.randn(500)
+##        data = [go.Histogram(x=x_values)]
+#        
+##        py.iplot(data, filename=metrics_filename)
+##        ax.plot(x_values, y_values, label=nice_index)
+#        break
+#    
+##    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
+##    yticks = mtick.FormatStrFormatter(fmt)
+##    ax.yaxis.set_major_formatter(yticks)
+#    
+#    # Shrink current axis's height by 50% on the bottom
+#    box = ax.get_position()
+#    ax.set_position([box.x0, box.y0 + box.height * 0.5, box.width, box.height * 0.5])
+#    
+#    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
+#           handletextpad=0.0, fancybox=True, shadow=True, fontsize='small')
+#    
+#    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+#    plt.close(fig)
     
 
 def _get_axis_values(plot_points, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, c_o_type = None):

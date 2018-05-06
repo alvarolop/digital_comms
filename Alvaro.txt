@@ -48,6 +48,10 @@ conda install -c plotly plotly
 conda install -c anaconda basemap 
 
 
+https://github.com/oliviaguest/gini
+
+
+
 2. Copy the code
 
 

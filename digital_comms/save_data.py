@@ -156,6 +156,7 @@ def write_chart_1(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         chart.add_aggregated_population_covered(value[0], previous_pop_covered)
     metrics_file.close()
     
+    
     if (False):
         # Plotting
         print('- Ploting Chart 1 PCDs...Total population and cost aggregated')
@@ -195,7 +196,9 @@ def write_chart_2(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         print('- Ploting Chart 2 PCDs...Capacity margin per year')
         plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'], 'pcd_chart_2_cap_margin_per_year_all', suffix)  
         
-
+    print('- Ploting Chart 2 PCDs...capacity margin histogram')
+    plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, 0, 4, "Capacity margin histogram", ['Capacity margin','Frequency'], 'pcd_chart_2_cap_margin_histogram', suffix)  
+      
     
     
     
@@ -256,6 +259,10 @@ def write_chart_4(ict_manager, coverage_obligation_type, pop_scenario, throughpu
 #    plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total demand per year", ['PCDs'], 'pcd_chart_4_demand_per_year_all', suffix)  
     print('- Ploting Chart 4 PCDs...Total population covered per year')
     plots.plot_chart_per_year(ict_manager, results, chart, 8, [6], TIMESTEPS, "Total population covered per year", ['PCDs'], 'pcd_chart_4_pop_covered_per_year_all', suffix) 
+    print('- Ploting Chart 4 PCDs...Population covered histogram')
+    plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, 0, 6, "Population covered histogram", ['% Population covered','Frequency'], 'pcd_chart_4_cap_margin_histogram', suffix)  
+      
+    
     
 def write_chart_1_LADs(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
     print('-> Chart 1 LADs...')
@@ -432,9 +439,7 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
     plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "% population covered per strategy", ['Time','% population'], True, '2_population_covered_per_strategy')  
     print('- Ploting Capacity margin per strategy and year')
     plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin per strategy", ['Time','Capacity margin'], False, '3_capacity_margin_per_strategy')  
-    print('- Ploting capacity margin histogram')
-    plots.plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin histogram", ['Capacity margin','Frequency'], '4_capacity_margin_histogram')  
-      
+
     
     
 #    # Print summary data
