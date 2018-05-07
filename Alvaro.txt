@@ -47,6 +47,9 @@ conda install -c plotly plotly
 
 conda install -c anaconda basemap
 
+# Creating gifs - http://imageio.github.io/
+conda install -c conda-forge imageio
+
 
 https://github.com/oliviaguest/gini
 

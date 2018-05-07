@@ -38,6 +38,9 @@ if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps'))
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'gifs')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'gifs'))
+
 
 print('')
 print('----------------------------------')
@@ -112,13 +115,13 @@ else:
         ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+#         ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
+#         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
+#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
@@ -655,3 +658,5 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     save_data.write_chart_4_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
 
 save_data.write_general_charts(system, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER)
+
+print ("Execution finished")

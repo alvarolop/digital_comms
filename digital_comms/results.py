@@ -41,6 +41,8 @@ class Results:
         self.shapefile_path = shapefile_path
         self.population_2020 = 0
 
+        self.gifs_filenames = collections.defaultdict(list)
+
 # CHARTS FOR PCDs
     @property
     def chart_1(self):

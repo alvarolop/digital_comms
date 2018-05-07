@@ -6,6 +6,8 @@ import digital_comms.plots as plots
 import csv
 import os
 
+import imageio
+
 
 #    eng = matlab.engine.start_matlab() # ("-desktop") para abrir la GUI
 #    MATLAB_FOLDER = "D:\Dropbox\00TFM\git\digital_comms\matlab_scripts"
@@ -438,25 +440,22 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
     print('- Ploting % population covered comparison per strategy and year')
     plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 4, "% population covered per strategy", ['Time','% population'], True, '2_population_covered_per_strategy')  
     print('- Ploting Capacity margin per strategy and year')
-    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin per strategy", ['Time','Capacity margin'], False, '3_capacity_margin_per_strategy')  
+    plots.plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 0, 6, "Capacity margin per strategy", ['Time','Capacity margin'], False, '3_capacity_margin_per_strategy')
+    print('- Saving gifs')
+    _save_gifs(results.gifs_filenames, results.output_path, 3)
 
-    
-    
-#    # Print summary data
-#    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
-##        print('-> Population covered: {}, {}, {}, {}, {}'.format(cov_1,cov_2,cov_3,cov_4,cov_5))
-#        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-##        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-##        if(table_name == 'chart1_pcd'):
-##            chart = results.chart1_get_table(index)
-##        elif (table_name == 'chart1_lad'):
-##            chart = results.chart1_lads_get_table(index)
-##        else:
-##        chart1 = results.chart1_get_table(index)
-#        chart4 = results.chart4_get_table(index)
-#        print('-> Population covered: {}, {}, {}, {}, {}, {}'.format(pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy, chart4))
-#    
-#    
+
+
+def _save_gifs(filenames, output_path, duration):
+#    print(repr(filenames))
+    for key, values in filenames.items():
+        metrics_filename = os.path.join(output_path, 'gifs', key + '.gif')
+        images = []
+        for filename in values:
+            images.append(imageio.imread(filename))
+        imageio.mimsave(metrics_filename, images, duration=duration)
+
+
 # This function is copied in plot.py so when something is modified, it has to be modified there.
 def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy):
     suffix = '{}_pop_{}_throughput_{}_coverage_{}_strategy_{}_'.format(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)

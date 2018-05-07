@@ -118,8 +118,10 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
     sm._A = []
     fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
 
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+    fig.savefig(metrics_filename + '.jpg', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+    results.gifs_filenames[name].append(metrics_filename + '.jpg')
+
 #    plt.show()
     plt.close(fig)
 
