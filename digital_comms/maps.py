@@ -85,8 +85,12 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
     axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
 
     # Get max and min value for the color map:
-    max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
-    min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
+    if name.startswith('lad_chart_4'):
+        max_value = 1
+        min_value = 0
+    else:
+        max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
+        min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
 
     for year in timesteps:
         ax = axlist[year-2020]

@@ -45,7 +45,7 @@ conda install -c conda-forge numpy
 conda install -c conda-forge pyshp
 conda install -c plotly plotly 
 
-conda install -c anaconda basemap 
+conda install -c anaconda basemap
 
 
 https://github.com/oliviaguest/gini
@@ -63,7 +63,7 @@ https://github.com/oliviaguest/gini
 
 git pull
 
- 
+
 
 2. Guardar cambios localmente y pushearlos a git. En el comando push hay que poner usuario y contraseña de git.
 
@@ -72,7 +72,7 @@ git add -A
 git status
 git commit -m "Your commit message"
 
-git push 
+git push
 
 
 git config --global user.email "alvarolop.medina@gmail.com"
@@ -81,3 +81,8 @@ git config --global user.name "alvarolop"
 
 
 
+
+1. budget_limit = True,  invest_by_demand = true
+2. budget_limit = False, invest_by_demand = true
+3. budget_limit = False, invest_by_demand = False
+4. budget_limit = True,  invest_by_demand = False
