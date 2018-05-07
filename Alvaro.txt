@@ -28,6 +28,12 @@ URBAN    => pcd1 (M607) until pcd5593(CH411)
 SUBURBAN => pcd5594(BD123) until pcd8985(PH304)
 RURAL    => There are no rural areas in this model
 
+----------------------
+Here are my geotypes!
+Urban => 688
+Suburban => 4905
+Rural => 3392
+----------------------
 
 
 

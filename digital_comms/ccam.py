@@ -713,7 +713,7 @@ def lookup_clutter_geotype(clutter_lookup, population_density):
     Notes
     -----
     Returns lowest boundary if population density is lower than the lowest boundary.
-    Returns upper boundary of a region if population density is within a region range.
+    Returns lower boundary of a region if population density is within a region range.
     Returns upper boundary if population density is higher than the highest boundary.
 
     """
@@ -725,7 +725,7 @@ def lookup_clutter_geotype(clutter_lookup, population_density):
     for (lower_popd, lower_geotype), (upper_popd, upper_geotype) in pairwise(clutter_lookup):
         if lower_popd < population_density and population_density <= upper_popd:
             # Be pessimistic about clutter, return upper bound
-            return upper_geotype
+            return lower_geotype # upper_geotype
 
     # If not caught between bounds, return highest geotype
     highest_popd, highest_geotype = clutter_lookup[-1]

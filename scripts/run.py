@@ -12,7 +12,7 @@ from digital_comms.ccam import ICTManager
 from digital_comms.interventions import decide_interventions
 from digital_comms.results import Results
 import digital_comms.save_data as save_data
-
+import collections
 
 ################################################################
 # SETUP MODEL RUN CONFIGURATION
@@ -115,13 +115,13 @@ else:
         ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
-#         ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+         ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
-#         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
+         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
+         ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
@@ -620,6 +620,20 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
             system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity)
             _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads)
             results.population_2020 = system.population
+
+            # my_pcd_type_count = collections.defaultdict(list)
+            # for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
+            #     print('- ' + str(pcd.id) + ' => '+ pcd.clutter_environment)
+            #     if pcd.clutter_environment in my_pcd_type_count:
+            #         my_pcd_type_count[pcd.clutter_environment] += 1
+            #     else:
+            #         my_pcd_type_count[pcd.clutter_environment] = 1
+            # print("----------------------")
+            # print("Here are my geotypes!")
+            # print("Urban => " + str(my_pcd_type_count["Urban"]))
+            # print("Suburban => " + str(my_pcd_type_count["Suburban"]))
+            # print("Rural => " + str(my_pcd_type_count["Rural"]))
+            # print("----------------------")
 
         # decide
         interventions_built, budget, spend, results = decide_interventions(intervention_strategy, budget, service_obligation_capacity, system, year, results, index)
