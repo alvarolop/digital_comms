@@ -4,7 +4,8 @@ from collections import defaultdict
 from itertools import tee
 from pprint import pprint
 
-PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR = 0.15
+PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR = 0.2
+
 
 class ICTManager(object):
     """Model controller class.
@@ -448,7 +449,28 @@ class LAD_OFCOM(object):
         )
         return summed_demand / summed_area
 
+    @property
     def coverage(self):
+        """Calculate coverage as the proportion of the population able to obtain the specified capacity threshold
+
+        Returns
+        -------
+        obj
+            Coverage in the local area district
+
+        Notes
+        -----
+        Function returns `0` when no postcode sectors are configured to the LAD.
+        """
+        if not self._pcd_sectors:
+            return 0
+
+        population_with_coverage = sum([pcd_sector.population * (pcd_sector.capacity / pcd_sector.demand) for pcd_sector in self._pcd_sectors.values()])
+        total_pop = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values()])
+        return float(population_with_coverage) / total_pop
+
+    @property
+    def coverage_strict(self):
         """Calculate coverage as the proportion of the population able to obtain the specified capacity threshold
 
         Returns
@@ -510,6 +532,7 @@ class PostcodeSector(object):
         # TODO: replace hard-coded parameter
         self.penetration = 0.8
         self.market_share = 0.3
+        self.overbooking_factor = 1 / 50
 
         # Keep list of assets
         self.assets = assets
@@ -518,31 +541,9 @@ class PostcodeSector(object):
     def __repr__(self):
         return "<PostcodeSector id:{}>".format(self.id)
 
-    def _calculate_user_demand(self, user_throughput):
-        """Calculate Mb/second from GB/month supplied as throughput scenario
-
-        Notes
-        -----
-        E.g.
-            2 GB per month
-                * 1024 to find MB
-                * 8 to covert bytes to bits
-                * 0.075 represents 7.5% of daily traffic taking place in the busy hour
-                * 1/30 assuming 30 days per month
-                * 1/3600 converting hours to seconds,
-            = ~0.01 Mbps required per user
-        """
-        return user_throughput * 1024 * 8 * PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR / 30 / 3600 ### i have removed market share and place in def demand below
-        #return user_throughput / 20 # assume we want to give X Mbps per second, with an OBF of  20
-    
     @property
     def threshold_demand(self):
         """Calculate capacity required to meet a service obligation.
-
-        Parameters
-        ----------
-        SERVICE_OBLIGATION_CAPACITY: int
-            The required service obligation in Mb/s
 
         Returns
         -------
@@ -561,8 +562,8 @@ class PostcodeSector(object):
             / 10 km^2 area
             = ~4.8 Mbps/km^2
         """
-        ### MARKET SHARE? ###
-        threshold_demand = self.population * self.penetration * self.market_share * self.service_obligation_capacity / (20 * self.area)
+        users = self.population * self.penetration * self.market_share
+        threshold_demand = users * self.service_obligation_capacity * self.overbooking_factor / self.area
         return threshold_demand
 
     @property
@@ -578,16 +579,13 @@ class PostcodeSector(object):
                 / 10 km^2 area
             = ~0.16 Mbps/km^2 area capacity demand
         """
-        users = self.population * self.penetration * 0.3 #market share
+        users = self.population * self.penetration * self.market_share
 
-        # Demand of GB
-        user_throughput_GB = users * self.user_demand_GB * 1 / 20 # oversubscription factor
-        capacity_per_kmsq_GB = user_throughput_GB / self.area
-        
-        # Demand of mbps
-        user_throughput_mbps = users * self.user_demand_mbps * 1 / 20 # oversubscription factor
-        capacity_per_kmsq_mbps = user_throughput_mbps / self.area
-        
+        capacity_per_kmsq_GB = users * self.user_demand_GB * self.overbooking_factor / self.area  # oversubscription
+        capacity_per_kmsq_mbps = users * self.user_demand_mbps * self.overbooking_factor / self.area  # oversubscription
+
+        # print(" -> Comparing: Capacity: {}, Demand: {}, Speed: {}, C.O.: {}".format(self.capacity, capacity_per_kmsq_GB, capacity_per_kmsq_mbps, self.threshold_demand))
+        # return capacity_per_kmsq_GB
         return max(capacity_per_kmsq_mbps, capacity_per_kmsq_GB)
 
     @property
@@ -641,6 +639,22 @@ class PostcodeSector(object):
 
         return capacity
 
+    def _calculate_user_demand(self, user_throughput):
+        """Calculate Mb/second from GB/month supplied as throughput scenario
+
+        Notes
+        -----
+        E.g.
+            2 GB per month
+                * 1024 to find MB
+                * 8 to covert bytes to bits
+                * 0.075 represents 7.5% of daily traffic taking place in the busy hour
+                * 1/30 assuming 30 days per month
+                * 1/3600 converting hours to seconds,
+            = ~0.01 Mbps required per user
+        """
+        return user_throughput * 1024 * 8 * PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR / 30 / 3600 ### i have removed market share and place in def demand below
+
     @property
     def capacity_margin(self):
         """obj: Capacity margin per postcode sector in Mbps
@@ -653,7 +667,7 @@ class PostcodeSector(object):
         """obj: If coverage obligations are met in this PCD
         """
 #        capacity_margin = self.capacity - self.threshold_demand
-        return (self.capacity > self.threshold_demand)
+        return self.capacity > self.threshold_demand
 
 
 def pairwise(iterable):
@@ -728,7 +742,7 @@ def lookup_clutter_geotype(clutter_lookup, population_density):
             return lower_geotype # upper_geotype
 
     # If not caught between bounds, return highest geotype
-    highest_popd, highest_geotype = clutter_lookup[-1]
+    highest_pop, highest_geotype = clutter_lookup[-1]
     return highest_geotype
 
 
@@ -794,13 +808,14 @@ def lookup_capacity(lookup_table, clutter_environment, frequency, bandwidth, sit
     for a, b in pairwise(density_capacities):
         lower_density, lower_capacity = a
         upper_density, upper_capacity = b
-        if lower_density <= site_density and site_density < upper_density:
+        if lower_density <= site_density < upper_density:
             # Interpolate between values
             return interpolate(lower_density, lower_capacity, upper_density, upper_capacity, site_density)
 
     # If not caught between bounds return highest capacity
     highest_density, highest_capacity = density_capacities[-1]
     return highest_capacity
+
 
 def interpolate(x0, y0, x1, y1, x):
     """Linear interpolation between two values

@@ -193,43 +193,39 @@ def decide_interventions(strategy, budget, service_obligation_capacity, system, 
     """
     available_interventions = AVAILABLE_STRATEGY_INTERVENTIONS[strategy]
 
+    # 1. Coverage obligations
     if service_obligation_capacity > 0:
-        service_built, budget, service_spend, results = meet_service_obligation(budget, available_interventions, timestep, service_obligation_capacity, system, results, index)
+        service_built, budget, service_spend, results = meet_service_obligation(budget, available_interventions, timestep, system, results, index)
     else:
         service_built, service_spend = [], []
 
-    # Build to meet demand
-    if (budget > 40000 or not results.co_budget_limit):
+    # 2. Demand
+    if budget > 40000 or not results.co_budget_limit:
         built, budget, spend, results = meet_demand(budget, available_interventions, timestep, system, results, index)
         results.chart_5[index].invest_to_meet_demand(timestep)
     else:
         print("DEMAN Considering {} of {} postcodes, no more budget".format(0, len(system.postcode_sectors.values())))
         built, budget, spend, results = [], budget, [], results
-
-#    print("Service", len(dp_built))
-#    print("Service", len(service_built))
-#    print("Demand", len(built))
+    print("Service", len(service_built))
+    print("Demand", len(built))
 
     return built + service_built, budget, spend + service_spend, results
 
-def meet_service_obligation(budget, available_interventions, timestep, service_obligation_capacity, system, results, index):
-    areas = _suggest_target_postcodes_coverage_obligations(system, results, timestep, service_obligation_capacity)
-    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, service_obligation_capacity)
+
+def meet_service_obligation(budget, available_interventions, timestep, system, results, index):
+    areas = _suggest_target_postcodes_coverage_obligations(system, results)
+    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, True)
 
 
 def meet_demand(budget, available_interventions, timestep, system, results, index):
-    areas = _suggest_target_postcodes_demand(system, results, timestep)
-    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results)
+    areas = _suggest_target_postcodes_demand(system, results)
+    return _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, False)
 
 
-def _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, threshold=None):
-    built_interventions = []
-    spend = []
-    chart1 = results.chart_1[index]
-    chart3 = results.chart_3[index]
-    
-    chart1_lads = results.chart_1_lads[index]
-    chart3_lads = results.chart_3_lads[index]
+def _suggest_interventions(system, budget, available_interventions, areas, timestep, index, results, service_obligation_boolean):
+    built_interventions, spend = [], []
+    chart1, chart3 = results.chart_1[index], results.chart_3[index]
+    chart1_lads, chart3_lads = results.chart_1_lads[index], results.chart_3_lads[index]
 
     for area in areas:
         area_interventions = []
@@ -238,7 +234,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 #        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
 #            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), area.capacity, area.threshold_demand, area.demand))
 #                    
-        if _area_satisfied(area, area_interventions, system, results, threshold):
+        if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
             continue
 
         # group assets by site
@@ -297,7 +293,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 
         # integrate_700
         if 'carrier_700' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, system, results, threshold):
+            if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                 continue
             
             build_option = INTERVENTIONS['carrier_700']['assets_to_build']
@@ -352,7 +348,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 
         # only_integrate_700
         if 'only_700' in available_interventions:
-            if _area_satisfied(area, area_interventions, system, results, threshold):
+            if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                 continue
             
             previous_capacity = _get_new_capacity(area, area_interventions)              
@@ -392,9 +388,11 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 spend.append((area.id, area.lad_id, 'carrier_700', cost))
                 chart1.add_cost(area.id, timestep, cost)
                 chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
+                chart3.add_tech(area.id, timestep, 'carrier_700')
+                chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
                 budget -= cost                
                 
-                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, threshold):
+                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
 #                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
 #                        print ("The demand/coverage obligation of {} is {}".format(area.id, "satisfied"))
                     break
@@ -402,7 +400,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
         
         # integrate_3.5
         if 'carrier_3500' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, system, results, threshold):
+            if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                 continue
 
             build_option = INTERVENTIONS['carrier_3500']['assets_to_build']
@@ -435,7 +433,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 
         # build small cells to next density
         if 'small_cell' in available_interventions and timestep >= 2020:
-            if _area_satisfied(area, area_interventions, system, results, threshold):
+            if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                 continue
             build_option = INTERVENTIONS['small_cell']['assets_to_build']
             cost = INTERVENTIONS['small_cell']['cost']
@@ -468,14 +466,16 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 spend.append((area.id, area.lad_id, 'small_cells', cost))
                 chart1.add_cost(area.id, timestep, cost)
                 chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
+                chart3.add_tech(area.id, timestep, 'small_cells')
+                chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'small_cells')
                 budget -= cost
 
-                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, threshold):
+                if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                     break
 
     return built_interventions, budget, spend, results
 
-def _suggest_target_postcodes_coverage_obligations(system, results, timestep, threshold):
+def _suggest_target_postcodes_coverage_obligations(system, results):
     """Suggest postcodes to cover COVERAGE OBLIGATIONS
     """
     all_postcodes = system.postcode_sectors.values()
@@ -537,7 +537,7 @@ def _suggest_target_postcodes_coverage_obligations(system, results, timestep, th
     elif results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']: 
         # Set amount of population that has to be covered per country
         pop_covered_per_country = {'E': 0, 'S': 0, 'W': 0}
-        target_pop_covered_per_country = { 'E': system.pop_per_country['E'] * results.co_percentage_covered, 'S': system.pop_per_country['S'] * results.co_percentage_covered, 'W': system.pop_per_country['W'] * results.co_percentage_covered}
+        target_pop_covered_per_country = {'E': system.pop_per_country['E'] * results.co_percentage_covered, 'S': system.pop_per_country['S'] * results.co_percentage_covered, 'W': system.pop_per_country['W'] * results.co_percentage_covered}
         
         # Select postcodes per country 
         for pcd in all_postcodes:
@@ -551,7 +551,7 @@ def _suggest_target_postcodes_coverage_obligations(system, results, timestep, th
         
   
     # Select postcodes that dont cover obligations
-    considered_postcodes = [pcd for pcd in postcodes if pcd.capacity < pcd.threshold_demand]
+    considered_postcodes = [pcd for pcd in postcodes ]  # if pcd.capacity < pcd.threshold_demand
     print("THRES Considering {} of {} postcodes".format(len(considered_postcodes), len(postcodes)))
         
     if results.co_coverage_obligation_type in ['cov_ob_2', 'cov_ob_4']:
@@ -564,33 +564,23 @@ def _suggest_target_postcodes_coverage_obligations(system, results, timestep, th
         return sorted(considered_postcodes, key=lambda pcd: pcd.population_density)
 
 
-def _suggest_target_postcodes_demand(system, results, timestep):
+def _suggest_target_postcodes_demand(system, results):
     """Suggest postcodes to cover DEMAND
     """
     if results.co_invest_by_demand:
-        # Suggest postcodes to cover DEMAND        
         considered_postcodes = [p for p in system.postcode_sectors.values()]
     else:
-        # No postcodes to invest by DEMAND
         considered_postcodes = []
+
     print("DEMAN Considering {} of {} postcodes".format(len(considered_postcodes), len(system.postcode_sectors.values())))
-        
+    return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
 
-    if results.co_coverage_obligation_type in ['cov_ob_2']:
-        return considered_postcodes
-    
-    # Orden PCDs according to the coverage obligation order
-    if results.co_descending_order:
-        return sorted(considered_postcodes, key=lambda pcd: -pcd.population_density)
+
+def _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
+    if service_obligation_boolean is True:
+        target_capacity = area.threshold_demand
     else:
-        return sorted(considered_postcodes, key=lambda pcd: pcd.population_density)
-
-
-def _area_satisfied(area, area_interventions, system, results, threshold):      
-    if threshold is None:
         target_capacity = area.demand
-    else:
-        target_capacity = threshold * area.population_density
 
     data = {
         "id": area.id,
@@ -608,10 +598,11 @@ def _area_satisfied(area, area_interventions, system, results, threshold):
         assets,
         area._capacity_lookup_table,
         area._clutter_lookup,
-        threshold
+        0
     )
     reached_capacity = test_area.capacity
     return reached_capacity >= target_capacity
+
 
 def _get_new_capacity(area, built_interventions):
     data = {

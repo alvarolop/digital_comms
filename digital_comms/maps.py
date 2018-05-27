@@ -66,8 +66,8 @@ def print_map(chart, title, column, results, name, index, colormap):
 #    plt.show()
     plt.close(fig)
 
-def print_map_year_all(chart, title, column, timesteps, results, name, index, colormap):
 
+def print_map_year_all(chart, title, column, timesteps, results, name, index, colormap):
     sf = shapefile.Reader(results.shapefile_path)
     metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
 
@@ -85,9 +85,9 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
     axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
 
     # Get max and min value for the color map:
-    if name.startswith('lad_chart_4'):
-        max_value = 1
-        min_value = 0
+    if name.startswith('lad_chart_2'):
+        max_value = results.cap_margin_bounds_maps[1]
+        min_value = results.cap_margin_bounds_maps[0]
     else:
         max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
         min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
@@ -107,7 +107,7 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
 
         for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information)
             color = palette(norm(chart.get_value(sr.record[0])[column][year]))
-            _paint_region(ax, sr.shape ,color)
+            _paint_region(ax, sr.shape , color)
 
     fig.subplots_adjust(wspace=0, hspace=0.200)
     axlist[11].axis('off')
@@ -126,62 +126,62 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
     plt.close(fig)
 
 
-def print_map_year_all_positive_skipped(chart, title, column, timesteps, results, name, index, colormap):
-
-    sf = shapefile.Reader(results.shapefile_path)
-    metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
-
-#    print(repr(chart._table.keys()))
-#    if not results.co_descending_order:
-#        chart = collections.OrderedDict(reversed(list(chart._table.items())))
-#    else:
-#        chart._table = chart._table
-#    print(repr(results.co_descending_order) + repr(chart.keys()))
-
-
-#    fig, ((ax1,ax2,ax3,ax4),(ax5,ax6,ax7,ax8),(ax9,ax10,ax11,ax12)) = plt.subplots(nrows=3, ncols=4)
-#    axlist = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12]
-
-    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
-    axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
-
-    # Get max and min value for the color map:
-#    max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
-    max_value = 0
-    min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
-
-    for year in timesteps:
-        ax = axlist[year-2020]
-
-        fig.suptitle(title, fontsize=16)
-        ax.set_aspect('equal')
-        ax.title.set_text(str(year))
-        ax.get_xaxis().set_visible(False)
-        ax.get_yaxis().set_visible(False)
-
-        # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
-        palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
-        norm = colors.Normalize(vmin=min_value, vmax=max_value)
-
-        for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information)
-            color = palette(norm(chart.get_value(sr.record[0])[column][year]))
-            if(chart.get_value(sr.record[0])[column][year] >= 0):
-                color = 'w'
-            _paint_region(ax, sr.shape ,color)
-
-    fig.subplots_adjust(wspace=0, hspace=0.200)
-    axlist[11].axis('off')
-    #    Colorbar is coded based on this link: https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots
-    #    Colorbar API: https://matplotlib.org/api/colorbar_api.html
-    sm = plt.cm.ScalarMappable(cmap=palette, norm=plt.Normalize(vmin=min_value, vmax=max_value))
-    # fake up the array of the scalar mappable. Urgh...
-    sm._A = []
-    fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
-
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
-    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-#    plt.show()
-    plt.close(fig)
+# def print_map_year_all_positive_skipped(chart, title, column, timesteps, results, name, index, colormap):
+#
+#     sf = shapefile.Reader(results.shapefile_path)
+#     metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
+#
+# #    print(repr(chart._table.keys()))
+# #    if not results.co_descending_order:
+# #        chart = collections.OrderedDict(reversed(list(chart._table.items())))
+# #    else:
+# #        chart._table = chart._table
+# #    print(repr(results.co_descending_order) + repr(chart.keys()))
+#
+#
+# #    fig, ((ax1,ax2,ax3,ax4),(ax5,ax6,ax7,ax8),(ax9,ax10,ax11,ax12)) = plt.subplots(nrows=3, ncols=4)
+# #    axlist = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12]
+#
+#     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+#     axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
+#
+#     # Get max and min value for the color map:
+# #    max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
+#     max_value = 0
+#     min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
+#
+#     for year in timesteps:
+#         ax = axlist[year-2020]
+#
+#         fig.suptitle(title, fontsize=16)
+#         ax.set_aspect('equal')
+#         ax.title.set_text(str(year))
+#         ax.get_xaxis().set_visible(False)
+#         ax.get_yaxis().set_visible(False)
+#
+#         # Select the color map from: https://matplotlib.org/examples/color/colormaps_reference.html
+#         palette = plt.get_cmap(colormap) #Add _r at the end to get the inverse color map
+#         norm = colors.Normalize(vmin=min_value, vmax=max_value)
+#
+#         for sr in sf.iterShapeRecords(): #For each LAD of the shapefile: shape (geometry) and record (information)
+#             color = palette(norm(chart.get_value(sr.record[0])[column][year]))
+#             if(chart.get_value(sr.record[0])[column][year] >= 0):
+#                 color = 'w'
+#             _paint_region(ax, sr.shape ,color)
+#
+#     fig.subplots_adjust(wspace=0, hspace=0.200)
+#     axlist[11].axis('off')
+#     #    Colorbar is coded based on this link: https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots
+#     #    Colorbar API: https://matplotlib.org/api/colorbar_api.html
+#     sm = plt.cm.ScalarMappable(cmap=palette, norm=plt.Normalize(vmin=min_value, vmax=max_value))
+#     # fake up the array of the scalar mappable. Urgh...
+#     sm._A = []
+#     fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
+#
+# #    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+#     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+# #    plt.show()
+#     plt.close(fig)
 
 
 def print_map_per_year(chart, title, column, timesteps, results, name, index, colormap):
@@ -340,8 +340,6 @@ def print_tech_map_per_year(chart, title, columns, timesteps, results, name, ind
         plt.close(fig)
 
 
-
-
 def _paint_region(ax, shape, color):
     # PAINT THE REGION
     npoints=len(shape.points) # total points
@@ -356,8 +354,7 @@ def _paint_region(ax, shape, color):
         ax.plot(x_lon,y_lat,'k',linewidth=0.3)
         ax.fill(x_lon,y_lat, facecolor=color)
 
-
-    else: # loop over parts of each shape, plot separately
+    else:  # loop over parts of each shape, plot separately
         for ip in range(nparts): # loop over parts, plot separately
             i0=shape.parts[ip]
             if ip < nparts-1:
@@ -375,21 +372,10 @@ def _paint_region(ax, shape, color):
             ax.plot(x_lon,y_lat,'k',linewidth=0.3)
             ax.fill(x_lon,y_lat, facecolor=color)
 
-
-
 ###########
 # USEFUL CODE
 ###########
-#   # Check shape and record attribute
-#    for name in dir(shape):
-#        print ("Shape: " + name)
-#    for name in dir(record):
-#        print ("Record: " + name)
-
-
-
-    #################
-        # Simulation the color bar
+# Simulation the color bar
 #    Z = [[i[column] for i in chart.table.values()]]
 #    levels = range(min_value,max_value+100,100)
 #    CS3 = plt.contour(Z, cmap=palette)

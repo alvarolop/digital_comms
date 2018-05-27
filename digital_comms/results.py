@@ -23,25 +23,27 @@ class Results:
         # Coverage obligation strategy
         #
         # Coverage obligations apply only to towns smaller than self.co_population_limit inhabitants
+        self.co_name = {}
         self.co_coverage_obligation_type = None #= ''
         self.co_percentage_covered = None #= 0
         self.co_population_limit_boolean = None #= False
         self.co_population_limit = None #= 5000
         self.co_deploiement_prioritaire = None # This percentage only applies to France
-        self.co_budget_limit = None #= True # True is the default value
-        self.co_descending_order = None #= True # True is the default value, investing in higher valuable pcds first
+        self.co_budget_limit = None # True is the default value
+        self.co_descending_order = None # True is the default value, investing in higher valuable pcds first
         self.co_invest_by_demand = None
         self.co_coverage_obligation = None
-
         self.co_percentage_covered_all = {}
 
-        self.covered_real = {}
+        # self.covered_real = {}
 
         self.output_path = output_path
         self.shapefile_path = shapefile_path
         self.population_2020 = 0
 
         self.gifs_filenames = collections.defaultdict(list)
+        self.cap_margin_bounds_plot = [-6000,6000]
+        self.cap_margin_bounds_maps = [-100, 100]
 
 # CHARTS FOR PCDs
     @property
@@ -232,11 +234,11 @@ class Chart1(object):
         else:
             print ("Error: {} key was not there!", key)
 
-    def add_population_covered(self, key, year, capacity, demand, population):
+    def add_population_covered(self, key, year, capacity, demand, population, coverage_obligation):
 #        self._table[key][8] += min (capacity / demand, 1) * population
         if year == 2030:
-            self._table[key][8] += min (capacity / demand, 1) * population
-        self._table[key][10][year] += min (capacity / demand, 1) * population
+            self._table[key][8] += min (capacity / coverage_obligation, 1) * population
+        self._table[key][10][year] += min (capacity / coverage_obligation, 1) * population
         
     def add_aggregated_population_covered(self, key, value):
         self._table[key][9] += value
@@ -448,7 +450,7 @@ class Chart3_LADS(object):
 class Chart4(object):
     """
     This class contains the information related to the PCD-Population covered chart.
-    [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {Cap_pcd}, {Demand_pcd}, {Pop_covered}, Cap_covered, population_sum, cost_sum]
+    [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {Cap_pcd}, {Demand_pcd}, {Pop_covered}, Cap_covered, population_sum, cost_sum, {coverage_obligation_pcd}]
     """
 
     def __init__(self):
@@ -463,21 +465,22 @@ class Chart4(object):
     table = property(_get_table, _set_table)
 
     def add_initial_info(self, pcd_id, pcd_lad_id, pcd_population, pcd_population_density, timesteps, previous_pop):
-        self._table[pcd_id] = [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {}, {}, {}, 0, 0, 0]
+        self._table[pcd_id] = [pcd_id, pcd_lad_id, pcd_population, pcd_population_density, {}, {}, {}, 0, 0, 0, {}]
         self._table[pcd_id][8] = pcd_population + previous_pop
 
         for year in timesteps:
             self._table[pcd_id][4][year] = 0
             self._table[pcd_id][5][year] = 0
             self._table[pcd_id][6][year] = 0
+            self._table[pcd_id][10][year] = 0
         return self._table[pcd_id][8]
 
-    def add_cap_and_demand(self, key, year, capacity, demand):
+    def add_cap_and_demand(self, key, year, capacity, demand, coverage_ob):
         self._table[key][4][year] = capacity
         self._table[key][5][year] = demand
-        self._table[key][6][year] = min (capacity / demand, 1)
-
-        if (capacity >= demand):
+        self._table[key][6][year] = min(capacity / demand, 1)
+        self._table[key][10][year] = min(capacity / coverage_ob, 1)
+        if (capacity >= coverage_ob):
             self._table[key][7] += 1
 
     def get_value(self, key):
@@ -553,20 +556,20 @@ class Chart5(object):
     def add_initial_info(self, results, system, index, year):
 
         # Initialize the dictionary adding the key, the first column and the population
-        self._table[year] = [year, system.population, 0, 0, 0, 0, 0, 0]
+        self._table[year] = [year, system.population, 0, 0, 0, 0, 0, 0, 0, 0]
 
         # Add the cost of all pcds this year
         self._table[year][2] = sum (value[4][year]     for key, value in results.chart1_get_table(index)._table.items())
 
         # Add the % population covered each year
         # %total_pop = sum(%pob_pcd * pob_pcd) / total_pop
-        percentage_sum = sum(value[6][year] * value[2] for key, value in results.chart4_get_table(index)._table.items())
+        percentage_sum = sum(value[10][year] * value[2] for key, value in results.chart4_get_table(index)._table.items())
         self._table[year][4] = percentage_sum / results.population_2020
 
         # Number of pcds that fullfil the coverage obligations
-        self._table[year][5] = sum(value[6][year]      for key, value in results.chart4_get_table(index)._table.items() if value[6][year] == 1)
+        self._table[year][5] = sum(value[10][year]      for key, value in results.chart4_get_table(index)._table.items() if value[6][year] == 1)
 
-        # Add the % population covered each year
+        # Add the capacity margin per year
         # %total_pop = sum(%pob_pcd * pob_pcd) / total_pop
         cap_margin_sum = sum(value[4][year] * value[2] for key, value in results.chart2_get_table(index)._table.items())
         self._table[year][6] = cap_margin_sum / results.population_2020
@@ -574,6 +577,12 @@ class Chart5(object):
         # Fill the meet demand column
         self._table[year][7] = self.invest_to_meet_demand_boolean
 
+        # Add the cost of all pcds this year
+        self._table[year][8] = sum(value[4][year] for key, value in results.chart4_get_table(index)._table.items())
+        # Add the cost of all pcds this year
+        self._table[year][9] = sum(value[5][year] for key, value in results.chart4_get_table(index)._table.items())
+        # Add the cost of all pcds this year
+        # self._table[year][9] = sum(value[5][year] for key, value in results.chart4_get_table(index)._table.items())
 
     def calculate_aggregated_elements(self, results, timesteps):
         previous_cost = 0
@@ -590,7 +599,7 @@ class Chart5(object):
         return self._table[key]
 
     def get_all_values(self):
-        print ("('Year', 'Population', 'Cost', 'Aggregated cost', '% Population covered', '# PCDs covered', 'Capacity margin', 'Invest by demand')")
+        print ("('Year', 'Population', 'Cost', 'Aggregated cost', '% Population covered', '# PCDs covered', 'Capacity margin', 'Invest by demand', 'Capacity', 'Demand')")
         for key,val in self._table.items():
             print (key, "=>", val)
         print("----")
@@ -628,7 +637,7 @@ class Chart5_LADS(object):
         self._table[key][5][year] = demand
         self._table[key][6][year] = coverage
 
-        if (capacity >= demand):
+        if (capacity >= coverage):
             self._table[key][7] += 1
 
     def get_value(self, key):

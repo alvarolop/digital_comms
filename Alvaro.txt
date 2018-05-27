@@ -35,7 +35,10 @@ Suburban => 4905
 Rural => 3392
 ----------------------
 
-
+geotype	    population_density
+Urban	    7959
+Suburban	782
+Rural	    0
 
 
 ######

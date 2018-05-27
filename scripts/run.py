@@ -25,13 +25,16 @@ CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
 INPUT_FOLDER = CONFIG['file_locations']['input_folder']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
-SHAPEFILE_PATH = CONFIG['file_locations']['shapefile_path']
+# SHAPEFILE_PATH = CONFIG['file_locations']['shapefile_path']
+SHAPEFILE_PATH = os.path.join(INPUT_FOLDER, 'visualization', 'LAD_shapes')
 
 # Create sub-directories for results
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'csv')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'csv'))
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures', 'detail_per_year')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures', 'detail_per_year'))
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures', 'summary')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures', 'summary'))
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps')):
@@ -46,7 +49,6 @@ print('')
 print('----------------------------------')
 print('Input  folder is: ' + INPUT_FOLDER)
 print('Output folder is:   ' + OUTPUT_FOLDER)
-print('Shapefile path is:   ' + SHAPEFILE_PATH)
 print('----------------------------------')
 
 BASE_YEAR = 2020
@@ -108,21 +110,18 @@ else:
 
 #    print('USING QUICK VERSION')
     RUN_OPTIONS = [
-#        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
         ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
         ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
-         ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
-         ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
-         ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
+        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
+        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
+        #
+        # ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+        # ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
+        # ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
+        # ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
+        # ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
+
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
 #        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'small_cell_and_spectrum'),
@@ -132,8 +131,8 @@ else:
     ]
 
 COVERAGE_OBLIGATIONS = {
-    'cov_ob_1': { # Ready
-        'name': 'Coverage Obligation 1',
+    'cov_ob_1': { # ORIGINAL
+        'name': 'More profitable first',
         'description': 'This is the original strategy of the code',
         'population_limit_boolean': False,
         'population_limit': None,
@@ -143,61 +142,61 @@ COVERAGE_OBLIGATIONS = {
         'invest_by_demand': True,
         'percentage_covered': 1,
         'coverage_obligation': {
-                'low': 1,
-                'baseline': 2,
+                'low': 2,
+                'baseline': 5,
                 'high': 8
         },
     },
-    'cov_ob_2': { # Ready
-        'name': 'Coverage Obligation 2',
+    'cov_ob_2': { # FRANCE
+        'name': 'Priority areas first',
         'description': 'French coverage obligation',
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0.30,
         'budget_limit': True,
         'descending_order': True,
-        'invest_by_demand': True, #
+        'invest_by_demand': True,
         'percentage_covered': 1, # This does not do anything
         'coverage_obligation': {
-                'low': 1,
-                'baseline': 2,
+                'low': 2,
+                'baseline': 5,
                 'high': 8
         },
     },
-    'cov_ob_3': { # Ready
-        'name': 'Coverage Obligation 3',
+    'cov_ob_3': { # GERMANY
+        'name': 'Less profitable first',
         'description': 'German coverage obligation',
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': False,
-        'invest_by_demand': True, #
+        'invest_by_demand': True,
         'percentage_covered': 0.90,
         'coverage_obligation': {
-                'low': 1,
-                'baseline': 2,
+                'low': 2,
+                'baseline': 5,
                 'high': 8
         },
     },
-    'cov_ob_4': { # Ready
-        'name': 'Coverage Obligation 4',
+    'cov_ob_4': { # SPAIN
+        'name': 'Only rural areas',
         'description': 'Spanish coverage obligation',
         'population_limit_boolean': True,
-        'population_limit': 5000,
+        'population_limit': 800,
         'deploiement_prioritaire': 0,
         'budget_limit': True,
         'descending_order': True,
         'invest_by_demand': True, #
         'percentage_covered': 0.90,
         'coverage_obligation': {
-                'low': 1,
-                'baseline': 2,
+                'low': 2,
+                'baseline': 5,
                 'high': 8
         },
     },
-    'cov_ob_5': { # Ready
-        'name': 'Coverage Obligation 5',
+    'cov_ob_5': { # The UK
+        'name': 'Develop countries',
         'description': 'UK coverage obligation',
         'population_limit_boolean': False,
         'population_limit': None,
@@ -207,8 +206,8 @@ COVERAGE_OBLIGATIONS = {
         'invest_by_demand': True, #
         'percentage_covered': 0.95,
         'coverage_obligation': {
-                'low': 1,
-                'baseline': 2,
+                'low': 2,
+                'baseline': 5,
                 'high': 8
         },
     },
@@ -458,7 +457,20 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
     # sort list by population density (first entry in each tuple)
     clutter_lookup.sort(key=lambda tup: tup[0])
 
-
+def _print_geotypes():
+    my_pcd_type_count = collections.defaultdict(list)
+    for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
+        # print('- ' + str(pcd.id) + ' => '+ pcd.clutter_environment)
+        if pcd.clutter_environment in my_pcd_type_count:
+            my_pcd_type_count[pcd.clutter_environment] += 1
+        else:
+            my_pcd_type_count[pcd.clutter_environment] = 1
+    print("----------------------")
+    print("Here are my geotypes!")
+    print("Urban => " + str(my_pcd_type_count["Urban"]))
+    print("Suburban => " + str(my_pcd_type_count["Suburban"]))
+    print("Rural => " + str(my_pcd_type_count["Rural"]))
+    print("----------------------")
 
 
 def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads):
@@ -556,11 +568,11 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
 ################################################################
 results = Results(OUTPUT_FOLDER, SHAPEFILE_PATH)
 
-for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
     print('----------------------------------')
-    print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
     assets = initial_system[:]
-    index = save_data._get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
+    index = save_data._get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
 
     results.chart1_add_table(index)
     results.chart2_add_table(index)
@@ -588,6 +600,7 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
 
     # Add information about coverage obligations
     results.co_coverage_obligation_type = coverage_obligation_type
+    results.co_name[coverage_obligation_type] = COVERAGE_OBLIGATIONS[coverage_obligation_type]['name']
     results.co_population_limit_boolean = COVERAGE_OBLIGATIONS[coverage_obligation_type]['population_limit_boolean']
     results.co_population_limit = COVERAGE_OBLIGATIONS[coverage_obligation_type]['population_limit']
     results.co_deploiement_prioritaire = COVERAGE_OBLIGATIONS[coverage_obligation_type]['deploiement_prioritaire']
@@ -597,9 +610,7 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
     results.co_invest_by_demand = COVERAGE_OBLIGATIONS[coverage_obligation_type]['invest_by_demand']
     results.co_coverage_obligation = COVERAGE_OBLIGATIONS[coverage_obligation_type]['coverage_obligation']
 
-
     results.co_percentage_covered_all[coverage_obligation_type] = results.co_percentage_covered
-
 
     for year in TIMESTEPS:
         print("-", year)
@@ -609,31 +620,19 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
             pcd_sector_id = pcd_sector["id"]
             pcd_sector["population"] = population_by_scenario_year_pcd[pop_scenario][year][pcd_sector_id]
             pcd_sector["user_throughput_GB"] = user_throughput_by_scenario_year_GB[throughput_scenario][year]
-            pcd_sector["user_throughput_mbps"] = user_throughput_by_scenario_year_mbps['low'][year] # Fixed to 2Mbps
+            pcd_sector["user_throughput_mbps"] = user_throughput_by_scenario_year_mbps['low'][year] # Fixed to 2 Mbps
 
         # Decide on new interventions
         budget = ANNUAL_BUDGET
-        service_obligation_capacity = COVERAGE_OBLIGATIONS[coverage_obligation_type]['coverage_obligation'][coverage_scenario]
+        service_obligation_capacity = COVERAGE_OBLIGATIONS[coverage_obligation_type]['coverage_obligation'][coverage_speed_scenario]
 
         # simulate first
         if year == BASE_YEAR:
             system = ICTManager(lads, ofcom_lads, ofcom_380_to_174, pcd_sectors, assets, capacity_lookup_table, clutter_lookup, service_obligation_capacity)
             _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads)
             results.population_2020 = system.population
+            # _print_geotypes()
 
-            # my_pcd_type_count = collections.defaultdict(list)
-            # for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
-            #     print('- ' + str(pcd.id) + ' => '+ pcd.clutter_environment)
-            #     if pcd.clutter_environment in my_pcd_type_count:
-            #         my_pcd_type_count[pcd.clutter_environment] += 1
-            #     else:
-            #         my_pcd_type_count[pcd.clutter_environment] = 1
-            # print("----------------------")
-            # print("Here are my geotypes!")
-            # print("Urban => " + str(my_pcd_type_count["Urban"]))
-            # print("Suburban => " + str(my_pcd_type_count["Suburban"]))
-            # print("Rural => " + str(my_pcd_type_count["Rural"]))
-            # print("----------------------")
 
         # decide
         interventions_built, budget, spend, results = decide_interventions(intervention_strategy, budget, service_obligation_capacity, system, year, results, index)
@@ -647,29 +646,31 @@ for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_ty
         # Fill capacity margins per year
         for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
             chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin) # Capacity_margin
-            chart4.add_cap_and_demand(pcd.id, year, pcd.capacity, pcd.demand) # Fill capacity, demand and population covered per year
-            chart1.add_population_covered(pcd.id, year, pcd.capacity, pcd.demand, pcd.population)
+            chart4.add_cap_and_demand(pcd.id, year, pcd.capacity, pcd.demand, pcd.threshold_demand) # Fill capacity, demand and population covered per year
+            chart1.add_population_covered(pcd.id, year, pcd.capacity, pcd.demand, pcd.population, pcd.threshold_demand)
 
         # Fill capacity margins per year
         for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
             chart2_lads.add_cap_margin(lad.id, year, lad.capacity_margin) # Capacity_margin
-            chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage()) # Fill capacity, demand and population covered per year
+            chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage) # Fill capacity, demand and population covered per year
 
         chart5.add_initial_info(results, system, index, year)
 
     chart5.calculate_aggregated_elements(results, TIMESTEPS)
     chart5.get_all_values()
 
-    save_data.write_chart_1(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_2(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_3(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_4(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_5(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
 
-    save_data.write_chart_1_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_2_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_3_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_4_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_1(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_2(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_3(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_4(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_5(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+
+    save_data.write_chart_1_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_2_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_3_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_4_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
 
 save_data.write_general_charts(system, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER)
 
