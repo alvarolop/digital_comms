@@ -7,6 +7,8 @@ import configparser
 import csv
 import os
 import sys
+import itertools
+import pprint
 
 from digital_comms.ccam import ICTManager
 from digital_comms.interventions import decide_interventions
@@ -25,7 +27,6 @@ CONFIG.read(os.path.join(os.path.dirname(__file__), 'script_config.ini'))
 
 INPUT_FOLDER = CONFIG['file_locations']['input_folder']
 OUTPUT_FOLDER = CONFIG['file_locations']['output_folder']
-# SHAPEFILE_PATH = CONFIG['file_locations']['shapefile_path']
 SHAPEFILE_PATH = os.path.join(INPUT_FOLDER, 'visualization', 'LAD_shapes')
 
 # Create sub-directories for results
@@ -43,7 +44,10 @@ if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps', 'detail_per_year'))
 if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'gifs')):
     os.makedirs(os.path.join(OUTPUT_FOLDER, 'gifs'))
-
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'figures', 'auxgifs')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'figures', 'auxgifs'))
+if not os.path.exists(os.path.join(OUTPUT_FOLDER, 'maps', 'auxgifs')):
+    os.makedirs(os.path.join(OUTPUT_FOLDER, 'maps', 'auxgifs'))
 
 print('')
 print('----------------------------------')
@@ -51,10 +55,17 @@ print('Input  folder is: ' + INPUT_FOLDER)
 print('Output folder is:   ' + OUTPUT_FOLDER)
 print('----------------------------------')
 
+results = Results(OUTPUT_FOLDER, SHAPEFILE_PATH)
+
 BASE_YEAR = 2020
 END_YEAR = 2030
 TIMESTEP_INCREMENT = 1
 TIMESTEPS = range(BASE_YEAR, END_YEAR + 1, TIMESTEP_INCREMENT)
+
+# Annual capital budget constraint for the whole industry, GBP * market share
+MARKET_SHARE = 0.3
+ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
+NETWORKS_TO_INCLUDE = ('A',)
 
 POPULATION_SCENARIOS = [
     "high",
@@ -81,54 +92,120 @@ COVERAGE_OBLIGATION_SCENARIOS = [
     "low",
 ]
 
-# Annual capital budget constraint for the whole industry, GBP * market share
-MARKET_SHARE = 0.3
-ANNUAL_BUDGET = (2 * 10 ** 9) * MARKET_SHARE
-
-NETWORKS_TO_INCLUDE = ('A',)
-
-if len(sys.argv) == 2 and sys.argv[1] == 'all':
-#    print('USING ALL THE POSSIBLE COMBINATIONS')
-    RUN_OPTIONS = [
-            ('low', 'low', 'low'),
-            ('baseline', 'baseline', 'low'),
-            ('high', 'high', 'low'),
-            ('static2017', 'baseline', 'low'),
-
-            ('low', 'low', 'baseline'),
-            ('baseline', 'baseline', 'baseline'),
-            ('high', 'high', 'baseline'),
-            ('static2017', 'baseline', 'baseline'),
-
-            ('low', 'low', 'high'),
-            ('baseline', 'baseline', 'high'),
-            ('high', 'high', 'high'),
-            ('static2017', 'baseline', 'high')
-        ]
-else:
 #    for pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy  in RUN_OPTIONS:
+# 1. Variaciones de capacity expansion strategies
+RUN_OPTION_10 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_11 = [
+    ('low', 'low', 'low', 'cov_ob_1', 'minimal'),
+    ('low', 'low', 'low', 'cov_ob_1', 'macrocell'),
+    ('low', 'low', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('low', 'low', 'low', 'cov_ob_1', 'small_cell'),
+    ('low', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('low', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_10 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+]
+RUN_OPTION_11 = [
+    # ('baseline', 'baseline', 'low', 'cov_ob_2', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700')
+]
 
-#    print('USING QUICK VERSION')
-    RUN_OPTIONS = [
-        ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
-        ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700'),
-        #
-        # ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-        # ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
-        # ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
-        # ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
-        # ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
+# 2. Variaciones de coverage obligations para macrocell_only_700
+RUN_OPTION_20 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum')
+]
 
-#        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
-#        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'small_cell_and_spectrum'),
-#        ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_700'),
-#        ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_only_700'),
-#        ('baseline', 'baseline', 'high', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ]
+# 3. Variaciones de coverage obligations para small_cell_and_spectrum
+RUN_OPTION_30 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700')
+]
+RUN_OPTIONS = RUN_OPTION_10 + RUN_OPTION_20 + RUN_OPTION_30
+# RUN_OPTIONS = RUN_OPTION_11
+
+results.summary_graphs_combinations['00_all'] = RUN_OPTIONS
+results.summary_graphs_combinations['10_capexpansion'] = RUN_OPTION_10
+# results.summary_graphs_combinations['11_capexpansion'] = RUN_OPTION_11
+
+results.summary_graphs_combinations['20_covobligations_macrocell_only_700'] = RUN_OPTION_20
+results.summary_graphs_combinations['30_covobligations_smallcell_and_spec'] = RUN_OPTION_30
+results.summary_graphs_combinations['40_covobligations'] = RUN_OPTION_20 + RUN_OPTION_30
+
+# for key, value in results.summary_graphs_combinations.items():
+#     print (value)
+
+# RUN_OPTIONS = [
+#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
+#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
+#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_700'),
+#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_only_700'),
+#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'small_cell_and_spectrum'),
+# ]
 
 COVERAGE_OBLIGATIONS = {
     'cov_ob_1': { # ORIGINAL
@@ -152,7 +229,7 @@ COVERAGE_OBLIGATIONS = {
         'description': 'French coverage obligation',
         'population_limit_boolean': False,
         'population_limit': None,
-        'deploiement_prioritaire': 0.30,
+        'deploiement_prioritaire': 0.18,
         'budget_limit': True,
         'descending_order': True,
         'invest_by_demand': True,
@@ -457,6 +534,7 @@ with open(CLUTTER_GEOTYPE_FILENAME, 'r') as clutter_geotype_file:
     # sort list by population density (first entry in each tuple)
     clutter_lookup.sort(key=lambda tup: tup[0])
 
+
 def _print_geotypes():
     my_pcd_type_count = collections.defaultdict(list)
     for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
@@ -474,17 +552,15 @@ def _print_geotypes():
 
 
 def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart4, chart1_lads, chart2_lads, chart3_lads, chart4_lads):
-#            print ("PCDS " + str(len([pcd for pcd in system.postcode_sectors.values() if pcd.area < 0.14])))
-
-    previous_pop1,previous_pop2,previous_pop3,previous_pop4 = 0,0,0,0
-    previous_pop1_lad,previous_pop2_lad,previous_pop3_lad,previous_pop4_lad = 0,0,0,0
+    previous_pop1, previous_pop2, previous_pop3, previous_pop4 = 0, 0, 0, 0
+    previous_pop1_lad, previous_pop2_lad, previous_pop3_lad, previous_pop4_lad = 0, 0, 0, 0
 
     list_postcodes = []
     list_lads = []
 
     if results.co_coverage_obligation_type in ['cov_ob_2']:   # FRANCE
         all_postcodes_inverted = sorted(system.postcode_sectors.values(), key=lambda pcd: pcd.population_density)
-        print("THRES French 1 - Considering {} of {} postcodes".format(len(all_postcodes_inverted), len(system.postcode_sectors.values())))
+        # print("THRES French 1 - Considering {} of {} postcodes".format(len(all_postcodes_inverted), len(system.postcode_sectors.values())))
 
         priority_postcodes, remaining_postcodes, pop_covered = [], [], 0
         target_pop = system.population * results.co_deploiement_prioritaire
@@ -501,7 +577,7 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
         priority_postcodes = sorted(priority_postcodes, key=lambda pcd: -pcd.population_density)
         remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)
 
-        print("THRES French 2 - Considering {} of {} postcodes".format(len(priority_postcodes), len(remaining_postcodes)))
+        # print("THRES French 2 - Considering {} of {} postcodes".format(len(priority_postcodes), len(remaining_postcodes)))
 
         # Add all the postcodes together
         list_postcodes = priority_postcodes + remaining_postcodes
@@ -528,15 +604,13 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
             else:
                 remaining_postcodes.append(pcd)
 
-
         # Change the order to start investing in the most profitable ones
         priority_postcodes = sorted(priority_postcodes, key=lambda pcd: -pcd.population_density)
         remaining_postcodes = sorted(remaining_postcodes, key=lambda pcd: -pcd.population_density)
 
-         # Add all the postcodes together
+        # Add all the postcodes together
         list_postcodes = priority_postcodes + remaining_postcodes
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density)
-
 
     elif results.co_coverage_obligation_type in ['cov_ob_1', 'cov_ob_5']:
         list_postcodes = sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density)
@@ -545,7 +619,6 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
     elif results.co_coverage_obligation_type in ['cov_ob_3']:    # GERMANY
         list_postcodes = sorted(system.postcode_sectors.values(), key=lambda pcd: pcd.population_density)
         list_lads = sorted(system.ofcom_lads.values(), key=lambda lad: lad.population_density)
-
 
     for pcd in list_postcodes:
         previous_pop1 = chart1.add_initial_info(pcd.id, pcd.lad_id, pcd.population, pcd.population_density, TIMESTEPS, previous_pop1)
@@ -566,8 +639,6 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
 # - run over population scenario / demand scenario / intervention strategy combinations
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
-results = Results(OUTPUT_FOLDER, SHAPEFILE_PATH)
-
 for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
     print('----------------------------------')
     print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)

@@ -4,9 +4,6 @@ from collections import defaultdict
 from itertools import tee
 from pprint import pprint
 
-PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR = 0.2
-
-
 class ICTManager(object):
     """Model controller class.
 
@@ -134,9 +131,8 @@ class ICTManager(object):
             # add PostcodeSector to LAD_OFCOM
             lad_containing_pcd_sector = self.ofcom_lads[ofcom_380_to_174[lad_id]]
             lad_containing_pcd_sector.add_pcd_sector(pcd_sector)
-#        print ("E = {}, S = {}, W = {}".format(self.pop_per_country['E'],self.pop_per_country['S'],self.pop_per_country['W']))
+        # print ("E = {}, S = {}, W = {}".format(self.pop_per_country['E'],self.pop_per_country['S'],self.pop_per_country['W']))
 
-            
     def coverage_obligation_satisfied(self, pcd):
         country_initial_letter = pcd.lad_id[0]
         
@@ -307,12 +303,12 @@ class LAD(object):
             for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
     
-#    @property
-#    def capacity_margin(self):
-#        """obj: Capacity margin per postcode sector in Mbps
-#        """
-#        capacity_margin = self.capacity - self.demand
-#        return capacity_margin
+   # @property
+#    # def capacity_margin(self):
+#    #     """obj: Capacity margin per postcode sector in Mbps
+#    #     """
+#    #     capacity_margin = self.capacity - self.demand
+#    #     return capacity_margin
     
     
 class LAD_OFCOM(object):
@@ -418,9 +414,7 @@ class LAD_OFCOM(object):
         if not self._pcd_sectors:
             return 0
 
-        summed_capacity = sum([
-            pcd_sector.capacity
-            for pcd_sector in self._pcd_sectors.values()])
+        summed_capacity = sum([pcd_sector.capacity for pcd_sector in self._pcd_sectors.values()])
         return summed_capacity / len(self._pcd_sectors)
 
     @property
@@ -439,14 +433,8 @@ class LAD_OFCOM(object):
         if not self._pcd_sectors:
             return 0
 
-        summed_demand = sum(
-            pcd_sector.demand * pcd_sector.area
-            for pcd_sector in self._pcd_sectors.values()
-        )
-        summed_area = sum(
-            pcd_sector.area
-            for pcd_sector in self._pcd_sectors.values()
-        )
+        summed_demand = sum(pcd_sector.demand * pcd_sector.area for pcd_sector in self._pcd_sectors.values())
+        summed_area = sum(pcd_sector.area for pcd_sector in self._pcd_sectors.values())
         return summed_demand / summed_area
 
     @property
@@ -465,7 +453,8 @@ class LAD_OFCOM(object):
         if not self._pcd_sectors:
             return 0
 
-        population_with_coverage = sum([pcd_sector.population * (pcd_sector.capacity / pcd_sector.demand) for pcd_sector in self._pcd_sectors.values()])
+        population_with_coverage = sum([pcd_sector.population * min((pcd_sector.capacity / pcd_sector.threshold_demand),
+                                                                    1) for pcd_sector in self._pcd_sectors.values()])
         total_pop = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
 
@@ -496,8 +485,8 @@ class LAD_OFCOM(object):
         if not self._pcd_sectors:
             return 0
 
-        capacity_lad = sum([ (pcd_sector.population * pcd_sector.capacity) for pcd_sector in self._pcd_sectors.values()]) #TODO: Comprobar si tengo que multiplicar por pop o pop_density
-        demand_lad = sum([ (pcd_sector.population * pcd_sector.demand) for pcd_sector in self._pcd_sectors.values()])
+        capacity_lad = sum([(pcd_sector.population * pcd_sector.capacity) for pcd_sector in self._pcd_sectors.values()])
+        demand_lad = sum([(pcd_sector.population * pcd_sector.demand) for pcd_sector in self._pcd_sectors.values()])
         total_pop = sum([pcd_sector.population for pcd_sector in self._pcd_sectors.values()])
         
         capacity_margin = (capacity_lad - demand_lad) / total_pop
@@ -511,13 +500,20 @@ class PostcodeSector(object):
         self.id = data["id"]
         self.lad_id = data["lad_id"]
         self.ofcom_lad_id = ofcom_lad_id
+        self.assets = assets
         self.population = data["population"]
         self.area = data["area"]
+
+        # TODO: replace hard-coded parameters
+        self.penetration = 0.8
+        self.market_share = 0.3
+        self.overbooking_factor = 1 / 50
+        self.percentage_of_traffic_in_busy_hour = 0.075
 
         self.user_throughput_GB = data["user_throughput_GB"]
         self.user_throughput_mbps = data["user_throughput_mbps"]
         
-        self.user_demand_GB = self._calculate_user_demand(self.user_throughput_GB)
+        self.user_demand_GB = self._calculate_user_demand(self.percentage_of_traffic_in_busy_hour, self.user_throughput_GB)
         self.user_demand_mbps = self.user_throughput_mbps
 
         self._capacity_lookup_table = capacity_lookup_table
@@ -528,15 +524,6 @@ class PostcodeSector(object):
             self._clutter_lookup,
             self.population_density
         )
-
-        # TODO: replace hard-coded parameter
-        self.penetration = 0.8
-        self.market_share = 0.3
-        self.overbooking_factor = 1 / 50
-
-        # Keep list of assets
-        self.assets = assets
-        self.capacity = self._macrocell_site_capacity() + self._small_cell_capacity() #Capacity per km^2
 
     def __repr__(self):
         return "<PostcodeSector id:{}>".format(self.id)
@@ -581,12 +568,17 @@ class PostcodeSector(object):
         """
         users = self.population * self.penetration * self.market_share
 
-        capacity_per_kmsq_GB = users * self.user_demand_GB * self.overbooking_factor / self.area  # oversubscription
-        capacity_per_kmsq_mbps = users * self.user_demand_mbps * self.overbooking_factor / self.area  # oversubscription
+        capacity_per_kmsq_GB = users * self.user_demand_GB * self.overbooking_factor / self.area
+        capacity_per_kmsq_mbps = users * self.user_demand_mbps * self.overbooking_factor / self.area
 
         # print(" -> Comparing: Capacity: {}, Demand: {}, Speed: {}, C.O.: {}".format(self.capacity, capacity_per_kmsq_GB, capacity_per_kmsq_mbps, self.threshold_demand))
-        # return capacity_per_kmsq_GB
         return max(capacity_per_kmsq_mbps, capacity_per_kmsq_GB)
+
+    @property
+    def capacity(self):
+        """obj: The sum of the capacity from macrocells and small cells per square kilometer (km^2)
+        """
+        return self._macrocell_site_capacity() + self._small_cell_capacity()  # Capacity per km^2
 
     @property
     def population_density(self):
@@ -639,7 +631,8 @@ class PostcodeSector(object):
 
         return capacity
 
-    def _calculate_user_demand(self, user_throughput):
+
+    def _calculate_user_demand(self, percentage_of_traffic_in_busy_hour, user_throughput):
         """Calculate Mb/second from GB/month supplied as throughput scenario
 
         Notes
@@ -653,11 +646,11 @@ class PostcodeSector(object):
                 * 1/3600 converting hours to seconds,
             = ~0.01 Mbps required per user
         """
-        return user_throughput * 1024 * 8 * PERCENTAGE_OF_TRAFFIC_IN_BUSY_HOUR / 30 / 3600 ### i have removed market share and place in def demand below
+        return user_throughput * 1024 * 8 * percentage_of_traffic_in_busy_hour / 30 / 3600
 
     @property
     def capacity_margin(self):
-        """obj: Capacity margin per postcode sector in Mbps
+        """obj: Capacity margin per postcode sector in Mbps per km^2
         """
         capacity_margin = self.capacity - self.demand
         return capacity_margin
@@ -666,7 +659,6 @@ class PostcodeSector(object):
     def coverage_obligations_covered(self):
         """obj: If coverage obligations are met in this PCD
         """
-#        capacity_margin = self.capacity - self.threshold_demand
         return self.capacity > self.threshold_demand
 
 
@@ -737,7 +729,7 @@ def lookup_clutter_geotype(clutter_lookup, population_density):
         return lowest_geotype
 
     for (lower_popd, lower_geotype), (upper_popd, upper_geotype) in pairwise(clutter_lookup):
-        if lower_popd < population_density and population_density <= upper_popd:
+        if lower_popd < population_density <= upper_popd:
             # Be pessimistic about clutter, return upper bound
             return lower_geotype # upper_geotype
 

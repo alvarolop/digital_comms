@@ -36,7 +36,7 @@ def print_map(chart, title, column, results, name, index, colormap):
 #    print(repr(results.co_descending_order) + repr(chart.keys()))
 
     fig = plt.figure()
-    ax = fig.add_subplot(1,1,1)
+    ax = fig.add_subplot(1, 1, 1)
 
     ax.set_aspect('equal')
     ax.title.set_text(title)
@@ -70,19 +70,10 @@ def print_map(chart, title, column, results, name, index, colormap):
 def print_map_year_all(chart, title, column, timesteps, results, name, index, colormap):
     sf = shapefile.Reader(results.shapefile_path)
     metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
+    metrics_filename_pdf = os.path.join(results.output_path, 'maps', 'auxgifs', name + '_' + index)
 
-#    print(repr(chart._table.keys()))
-#    if not results.co_descending_order:
-#        chart._table = collections.OrderedDict(reversed(list(chart._table.items())))
-#    else:
-#        chart._table = chart._table
-#    print(repr(results.co_descending_order) + repr(chart.keys()))
-
-#    fig, ((ax1,ax2,ax3,ax4),(ax5,ax6,ax7,ax8),(ax9,ax10,ax11,ax12)) = plt.subplots(nrows=3, ncols=4)
-#    axlist = [ax1,ax2,ax3,ax4,ax5,ax6,ax7,ax8,ax9,ax10,ax11,ax12]
-
-    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
-    axlist = [fig.add_subplot(3,4,i+1) for i in range(12)]
+    fig = plt.figure(figsize=(8, 8)) # Notice the equal aspect ratio
+    axlist = [fig.add_subplot(3, 4, i+1) for i in range(12)]
 
     # Get max and min value for the color map:
     if name.startswith('lad_chart_2'):
@@ -118,9 +109,9 @@ def print_map_year_all(chart, title, column, timesteps, results, name, index, co
     sm._A = []
     fig.colorbar(sm,ax=axlist) # colorbar(sm, orientation= 'horizontal')
 
-    fig.savefig(metrics_filename + '.jpg', dpi=1000)
+    fig.savefig(metrics_filename_pdf + '.jpg', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    results.gifs_filenames[name].append(metrics_filename + '.jpg')
+    results.gifs_filenames[name].append(os.path.join(metrics_filename, 'auxgifs') + '.jpg')
 
 #    plt.show()
     plt.close(fig)

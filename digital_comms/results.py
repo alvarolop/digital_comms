@@ -44,6 +44,7 @@ class Results:
         self.gifs_filenames = collections.defaultdict(list)
         self.cap_margin_bounds_plot = [-6000,6000]
         self.cap_margin_bounds_maps = [-100, 100]
+        self.summary_graphs_combinations = {}
 
 # CHARTS FOR PCDs
     @property
@@ -525,7 +526,7 @@ class Chart4_LADS(object):
         self._table[key][5][year] = demand
         self._table[key][6][year] = coverage
 
-        if (capacity >= demand):
+        if capacity >= demand:
             self._table[key][7] += 1
 
     def get_value(self, key):
@@ -637,7 +638,7 @@ class Chart5_LADS(object):
         self._table[key][5][year] = demand
         self._table[key][6][year] = coverage
 
-        if (capacity >= coverage):
+        if capacity >= coverage:
             self._table[key][7] += 1
 
     def get_value(self, key):

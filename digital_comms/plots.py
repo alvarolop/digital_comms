@@ -4,48 +4,39 @@ PLOT FUNCTION
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import matplotlib.mlab as mlab
-
-
-#import numpy as np
-#import matplotlib.pyplot as plt
-
-#import plotly.plotly as py
-#import plotly.graph_objs as go
 
 from collections import OrderedDict
 import os
 
+
 def plot_chart(ict_manager, results, chart, col_pop, col_pop_agg, col_value, col_value_agg, title, ax_names, name, index):
     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
     
-    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+    fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
     fig.suptitle(title)
     ax = fig.subplots()
     ax.set_xlabel(ax_names[0])
     ax.set_ylabel(ax_names[1])
+    ax.grid(True)
 
-    # ax.set_facecolor((1.0, 0.47, 0.42))
-    
-    if(True): 
-        x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
-        ax.plot(x_values, y_values)
-    else:
-        x_values = [value[0] for key,value in chart._table.items()]
-        y_values = [value[col_value_agg] for key,value in chart._table.items()]
-        ax.plot(np.arange(len(x_values)), y_values)
-        ax.set_xticklabels(x_values)
+    # if(True):
+    x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
+    ax.plot(x_values, y_values)
+    # else:
+    #     x_values = [value[0] for key,value in chart._table.items()]
+    #     y_values = [value[col_value_agg] for key,value in chart._table.items()]
+    #     ax.plot(np.arange(len(x_values)), y_values)
+    #     ax.set_xticklabels(x_values)
 
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    xticks = mtick.FormatStrFormatter(fmt)
-    ax.xaxis.set_major_formatter(xticks)
-    
+    # Plot the chart until 100%
+    y_values = np.linspace(0, results.population_2020, 1000)
+    x_values = np.linspace(0, 100, 1000)
+    ax.plot(x_values, y_values, alpha=0)
+
+    ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    
-#    plt.show()    
     plt.close(fig)
 
     
@@ -62,6 +53,7 @@ def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, 
     column_number = 0
     for column in columns:
         ax = axlist[column_number]
+        ax.grid(True)
 
         x_elements = [value[0] for key,value in chart._table.items()]
         y_values = [value[column] for key,value in chart._table.items()]
@@ -75,16 +67,10 @@ def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, 
 #        ax.set_xticklabels(x_values)
         column_number += 1
         
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    xticks = mtick.FormatStrFormatter(fmt)
-    ax.xaxis.set_major_formatter(xticks) 
-    
+    ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
     # fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    
-#    plt.show()    
     plt.close(fig)
     
 def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps, title, ax_names, name, index):
@@ -93,11 +79,11 @@ def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps
     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
     fig.suptitle(title)
     axlist = [fig.add_subplot(6,2,i+1) for i in range(len(timesteps))]
-        
+
     column_number = 0
     for year in timesteps:
         ax = axlist[year-timesteps[0]]
-
+        ax.grid(True)
         y_values = [value[columns[0]][year] for key,value in chart._table.items()]
         
         ax.set_xlabel(ax_names[0])
@@ -110,17 +96,11 @@ def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps
 
 #        ax.set_xticklabels(x_values)
         column_number += 1
-    
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    xticks = mtick.FormatStrFormatter(fmt)
-    ax.xaxis.set_major_formatter(xticks)
-    
+
+    ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
     fig.tight_layout(rect=[0, 0.03, 1, 0.95])
     
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
     fig.savefig(metrics_filename + '.svg', format='svg')
-    
-#    plt.show()    
     plt.close(fig)
 
 
@@ -133,6 +113,7 @@ def plot_chart_detail_per_year(ict_manager, results, chart, pop_sum, columns, ti
         ax = fig.subplots()
         ax.set_xlabel(ax_names[0])
         ax.set_ylabel(ax_names[1])
+        ax.grid(True)
 
         y_values = [value[columns[0]][year] for key, value in chart._table.items()]
 
@@ -141,48 +122,60 @@ def plot_chart_detail_per_year(ict_manager, results, chart, pop_sum, columns, ti
 
         ax.plot(x_values, y_values, color='b', linewidth=1 / 3)
 
-        #        ax.set_xticklabels(x_values)
-        #
-        # fmt = '%.0f%%'  # Format you want the ticks, e.g. '40%'
-        # xticks = mtick.FormatStrFormatter(fmt)
-        # ax.xaxis.set_major_formatter(xticks)
-
         fig.tight_layout(rect=[0, 0.03, 1, 0.95])
 
-        #    fig.savefig(metrics_filename + '.pdf', dpi=1000)
         fig.savefig(metrics_filename + '.svg', format='svg')
-
-        #    plt.show()
         plt.close(fig)
-    
-    
-def plot_histogram(ict_manager, results, chart, TIMESTEPS, col_time, col_value, title, ax_names, name, index):
-    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)    
 
-    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+
+# def plot_histogram_cap_margin(ict_manager, results, chart, TIMESTEPS, cumulative, col_value, title, ax_names, name, index):
+#     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
+#
+#     fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
+#     ax = fig.subplots()
+#
+#     ax.set_xlabel(ax_names[0])
+#     ax.set_ylabel(ax_names[1])
+#     ax.set_title(title)
+#     ax.grid(True)
+#
+#     values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
+#
+#     n, bins, patches = plt.hist(values, bins=100, range=(results.cap_margin_bounds_plot[0], results.cap_margin_bounds_plot[1]), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
+#
+#     formatter = mtick.FuncFormatter(lambda v, pos: '{:3.3f}%'.format(v * 100))
+#     ax.yaxis.set_major_formatter(formatter)
+#
+#     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
+#     plt.close(fig)
+
+
+def plot_histogram(ict_manager, results, chart, TIMESTEPS, cumulative, percentage_x_axis, col_value, title, ax_names, name, index):
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
+
+    fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
     ax = fig.subplots()
-    
+
     ax.set_xlabel(ax_names[0])
     ax.set_ylabel(ax_names[1])
     ax.set_title(title)
     ax.grid(True)
-        
-    values = [value[col_value][2030] * 100 for key,value in chart._table.items()]
-    
-    # the histogram of the data
-    # https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html
-    # n, bins, patches = plt.hist(values, bins=200, range=(-max(values),max(values)), density=True, facecolor='g', alpha=0.75)
-    n, bins, patches = plt.hist(values, bins=200, range=(results.cap_margin_bounds_plot[0],results.cap_margin_bounds_plot[1]), density=True, facecolor='g', alpha=0.75)
 
-    
-#    ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
-#    ax.axis([40, 160, 0, 0.03])
-    
+    values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
+
+    n, bins, patches = plt.hist(values, bins=100, range=(0, 100), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
+
+    if percentage_x_axis:
+        xformatter = mtick.FormatStrFormatter('%.0f%%')
+        ax.xaxis.set_major_formatter(xformatter)
+
+    yformatter = mtick.FuncFormatter(lambda v, pos: '{:3.3f}%'.format(v * 100))
+    ax.yaxis.set_major_formatter(yformatter)
+
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
     plt.close(fig)
 
-    
-    
+
 def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_pop, col_pop_agg, col_value, col_value_agg, title, ax_names, name):
     metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
     
@@ -207,10 +200,8 @@ def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 
     y_values = np.linspace(0, results.population_2020, 1000)
     x_values = np.linspace(0, 100, 1000)
     ax.plot(x_values, y_values, alpha=0)
-        
-    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    xticks = mtick.FormatStrFormatter(fmt)
-    ax.xaxis.set_major_formatter(xticks)
+
+    ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
     
     # Shrink current axis's height by 50% on the bottom
     box = ax.get_position()
@@ -218,14 +209,12 @@ def plot_several_lines_population(ict_manager, results, RUN_OPTIONS, TIMESTEPS, 
     
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
            handletextpad=0.0, fancybox=True, shadow=True, fontsize='x-small')
-#    fig.savefig(metrics_filename + '.pdf', dpi=1000)
+
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    
-#    plt.show()    
     plt.close(fig)
     
     
-def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, y_percentage_boolean, name):
+def plot_several_lines_years(ict_manager, results, run_options, TIMESTEPS, col_time, col_value, title, ax_names, y_percentage_boolean, name):
     metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
     
     # Set Axis and Title
@@ -237,7 +226,7 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
     ax.set_title(title)
     ax.grid(True)
     
-    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in run_options:
         index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
         nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results)
         chart = results.chart5_get_table(index)
@@ -247,7 +236,7 @@ def plot_several_lines_years(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_t
 
         ax.plot(x_values, y_values, label=nice_index)
     
-    if (y_percentage_boolean):
+    if y_percentage_boolean:
         fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
         yticks = mtick.FormatStrFormatter(fmt)
         ax.yaxis.set_major_formatter(yticks)

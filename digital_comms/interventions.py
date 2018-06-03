@@ -2,9 +2,10 @@
 """
 # pylint: disable=C0103
 from digital_comms.ccam import PostcodeSector
-
 import copy
-#import pprint
+
+# PRINT_PCDS = ["SY113", "HU75", "NP49"]
+PRINT_PCDS = []
 
 ################################################################
 # EXAMPLE COST LOOKUP TABLE
@@ -129,8 +130,8 @@ AVAILABLE_STRATEGY_INTERVENTIONS = {
     # The cost will be the addtion of another carrier on each basestation ~£15k
     # (providing thre is 4G already)
     # If 4G isn't present, the site will need major upgrades.
-    'macrocell': ('upgrade_to_lte', 'carrier_700',
-                  'carrier_3500'),
+    'macrocell': ('upgrade_to_lte', 'carrier_700', 'carrier_3500'),
+
      # Intervention Strategy 2.
      # Integrate 700
     'macrocell_700': ('upgrade_to_lte', 'carrier_700'),
@@ -143,8 +144,7 @@ AVAILABLE_STRATEGY_INTERVENTIONS = {
     # Intervention Strategy 4
     # Deploy a small cell layer at 3700 MHz
     # The cost will include the small cell unit and the civil works per cell
-    'small_cell_and_spectrum': ('upgrade_to_lte', 'carrier_700',
-                   'carrier_3500', 'small_cell'),
+    'small_cell_and_spectrum': ('upgrade_to_lte', 'carrier_700', 'carrier_3500', 'small_cell'),
                                 
     # Intervention Strategy 5: Alvaro
      # Integrate 700
@@ -227,14 +227,17 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
     chart1, chart3 = results.chart_1[index], results.chart_3[index]
     chart1_lads, chart3_lads = results.chart_1_lads[index], results.chart_3_lads[index]
 
+    pcds_with_no_assets, popu_with_no_assets, area_with_no_assets = 0, 0, 0
     for area in areas:
         area_interventions = []
         if results.co_budget_limit and budget < 0:
             break
-#        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), area.capacity, area.threshold_demand, area.demand))
-#                    
+        if area.id in PRINT_PCDS:
+            print("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), area.capacity, area.threshold_demand, area.demand))
+
         if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
+            # if area.id in PRINT_PCDS:
+            #     print(area.id + " => Area Satisfied!!")
             continue
 
         # group assets by site
@@ -244,6 +247,14 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 assets_by_site[asset['site_ngr']] = [asset]
             else:
                 assets_by_site[asset['site_ngr']].append(asset)
+
+        if assets_by_site == {}:
+            # print(area.id + " => Area With no assets!!!!")
+            pcds_with_no_assets += 1
+            popu_with_no_assets += area.population
+            area_with_no_assets += area.area
+
+            # print(str(area_with_no_assets))
 
         # integrate_800 and integrate_2.6
         if 'upgrade_to_lte' in available_interventions:
@@ -267,13 +278,16 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                         new_capacity = _get_new_capacity(area, area_interventions)
                         
                         # If capacity hasn´t grown, then break for this PCD
-                        if(new_capacity <= previous_capacity):
-#                            if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                                print (area.id + " => Break")
+                        if new_capacity <= previous_capacity:
+                            if area.id in PRINT_PCDS:
+                                print(area.id + " => Break")
                             break
-                                        
-#                        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                            print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+                        if area.id in PRINT_PCDS:
+                            print(
+                                "Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(
+                                    area.id, len(list(area.assets)), len(area_interventions), previous_capacity,
+                                    new_capacity, area.threshold_demand, area.demand))
+
                         # If capacity can grow, then new loop
                         previous_capacity = new_capacity
                         
@@ -306,8 +320,6 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 if 'LTE' in [asset['technology'] for asset in site_assets] and \
                         '700' not in [asset['frequency'] for asset in site_assets]:
                             
-#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                        print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
                     # set both assets to this site_ngr
                     for option in build_option:
                         to_build = copy.copy(option)
@@ -320,13 +332,13 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                         new_capacity = _get_new_capacity(area, area_interventions)
                         
                         # If capacity hasn´t grown, then break for this PCD
-                        if(new_capacity <= previous_capacity):
-#                            if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                                print (area.id + " => Break")
+                        if new_capacity <= previous_capacity:
+                            if area.id in PRINT_PCDS:
+                                print(area.id + " => Break")
                             break
-                                        
-#                        if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
+
+                        if area.id in PRINT_PCDS:
+                            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
                         # If capacity can grow, then new loop
                         previous_capacity = new_capacity
                 
@@ -343,8 +355,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
 
         if results.co_budget_limit and budget < 0:
             break
-        
-        
+
 
         # only_integrate_700
         if 'only_700' in available_interventions:
@@ -357,7 +368,7 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 assets_lte = len([asset for asset in current_assets if asset['frequency'] == "800"])
                 assets_700 = len([asset for asset in current_assets if asset['frequency'] == "700"])
 
-                if (assets_lte > assets_700):
+                if assets_lte > assets_700:
                     build_option = INTERVENTIONS['carrier_700']['assets_to_build']
                     cost = INTERVENTIONS['carrier_700']['cost']
                 else:
@@ -371,19 +382,17 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 
                 # Get capacity with the new asset
                 new_capacity = _get_new_capacity(area, area_interventions)
-                
-                # If capacity hasn´t grown, then break for this PCD
-                if(new_capacity <= previous_capacity):
-#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                        print (area.id + " => Break")
+                if new_capacity <= previous_capacity: # If capacity hasn´t grown, then break for this PCD
+                    if area.id in PRINT_PCDS:
+                        print(area.id + " => Break")
                     break
-                                
-#                if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                    print ("Area = {},  Assets = {}, New assets = {}, LTE assets = {}, 700 assets = {}, Cost = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), assets_lte, assets_700, cost, previous_capacity, new_capacity, area.threshold_demand, area.demand))
-                
+
+                if area.id in PRINT_PCDS:
+                    print("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+
                 # If capacity can grow, then new loop
                 previous_capacity = new_capacity
-                built_interventions += to_build #This is for the whole year
+                built_interventions += to_build  # This is for the whole year
                 
                 spend.append((area.id, area.lad_id, 'carrier_700', cost))
                 chart1.add_cost(area.id, timestep, cost)
@@ -393,8 +402,6 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 budget -= cost                
                 
                 if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
-#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                        print ("The demand/coverage obligation of {} is {}".format(area.id, "satisfied"))
                     break
                        
         
@@ -451,17 +458,17 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 new_capacity = _get_new_capacity(area, area_interventions)
                 
                 # If capacity hasn´t grown, then break for this PCD
-                if(new_capacity <= previous_capacity):
-#                    if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                        print (area.id + " => Break")
+                if new_capacity <= previous_capacity:
+                    if area.id in PRINT_PCDS:
+                       print (area.id + " => Break")
                     break
-                                
-#                if (area.id == "SG175" or area.id == "WC2B4" or area.id == "M607"):
-#                    print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
-                
+
+                if area.id in PRINT_PCDS:
+                    print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+
                 # If capacity can grow, then new loop
                 previous_capacity = new_capacity
-                
+
                 built_interventions += to_build
                 spend.append((area.id, area.lad_id, 'small_cells', cost))
                 chart1.add_cost(area.id, timestep, cost)
@@ -473,7 +480,9 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                     break
 
+    # print('{} - There are {} pcds with no assets. It is {} - {} % of the population and {} - {} % of the area'.format(str(service_obligation_boolean), pcds_with_no_assets, popu_with_no_assets, popu_with_no_assets * 100 /65000000, area_with_no_assets, area_with_no_assets * 100 / 209331))
     return built_interventions, budget, spend, results
+
 
 def _suggest_target_postcodes_coverage_obligations(system, results):
     """Suggest postcodes to cover COVERAGE OBLIGATIONS
