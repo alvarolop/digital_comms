@@ -4,6 +4,7 @@ from collections import defaultdict
 from itertools import tee
 from pprint import pprint
 
+
 class ICTManager(object):
     """Model controller class.
 
@@ -302,14 +303,7 @@ class LAD(object):
             pcd_sector.population
             for pcd_sector in self._pcd_sectors.values()])
         return float(population_with_coverage) / total_pop
-    
-   # @property
-#    # def capacity_margin(self):
-#    #     """obj: Capacity margin per postcode sector in Mbps
-#    #     """
-#    #     capacity_margin = self.capacity - self.demand
-#    #     return capacity_margin
-    
+
     
 class LAD_OFCOM(object):
     """Local area district. 

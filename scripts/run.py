@@ -6,15 +6,15 @@
 import configparser
 import csv
 import os
-import sys
-import itertools
-import pprint
+import time
+import collections
+from datetime import timedelta
 
 from digital_comms.ccam import ICTManager
 from digital_comms.interventions import decide_interventions
 from digital_comms.results import Results
 import digital_comms.save_data as save_data
-import collections
+
 
 ################################################################
 # SETUP MODEL RUN CONFIGURATION
@@ -93,82 +93,92 @@ COVERAGE_OBLIGATION_SCENARIOS = [
 ]
 
 #    for pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy  in RUN_OPTIONS:
+
 # 1. Variaciones de capacity expansion strategies
-RUN_OPTION_10 = [
+RUN_OPTION_100 = [
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_11 = [
-    ('low', 'low', 'low', 'cov_ob_1', 'minimal'),
-    ('low', 'low', 'low', 'cov_ob_1', 'macrocell'),
-    ('low', 'low', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('low', 'low', 'low', 'cov_ob_1', 'small_cell'),
-    ('low', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('low', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_10 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
-]
-RUN_OPTION_11 = [
-    # ('baseline', 'baseline', 'low', 'cov_ob_2', 'minimal'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700')
 ]
 
+# RUN_OPTION_101 = [
+#     ('low', 'low', 'low', 'cov_ob_1', 'minimal'),
+#     ('low', 'low', 'low', 'cov_ob_1', 'macrocell'),
+#     ('low', 'low', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('low', 'low', 'low', 'cov_ob_1', 'small_cell'),
+#     ('low', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('low', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_102 = [
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_103 = [
+#     ('low', 'high', 'low', 'cov_ob_1', 'minimal'),
+#     ('low', 'high', 'low', 'cov_ob_1', 'macrocell'),
+#     ('low', 'high', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('low', 'high', 'low', 'cov_ob_1', 'small_cell'),
+#     ('low', 'high', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('low', 'high', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_104 = [
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'minimal'),
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'macrocell'),
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'small_cell'),
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('baseline', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_105 = [
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'minimal'),
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'macrocell'),
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'small_cell'),
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('baseline', 'high', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_106 = [
+#     ('high', 'low', 'low', 'cov_ob_1', 'minimal'),
+#     ('high', 'low', 'low', 'cov_ob_1', 'macrocell'),
+#     ('high', 'low', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('high', 'low', 'low', 'cov_ob_1', 'small_cell'),
+#     ('high', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('high', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_107 = [
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('high', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+#
+# RUN_OPTION_108 = [
+#     ('high', 'high', 'low', 'cov_ob_1', 'minimal'),
+#     ('high', 'high', 'low', 'cov_ob_1', 'macrocell'),
+#     ('high', 'high', 'low', 'cov_ob_1', 'macrocell_700'),
+#     ('high', 'high', 'low', 'cov_ob_1', 'small_cell'),
+#     ('high', 'high', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+#     ('high', 'high', 'low', 'cov_ob_1', 'macrocell_only_700')
+# ]
+
+
 # 2. Variaciones de coverage obligations para macrocell_only_700
-RUN_OPTION_20 = [
+RUN_OPTION_200 = [
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
     ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
     ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
@@ -177,23 +187,23 @@ RUN_OPTION_20 = [
 ]
 
 # 3. Variaciones de coverage obligations para small_cell_and_spectrum
-RUN_OPTION_30 = [
+RUN_OPTION_300 = [
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
     ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
     ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
     ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
     ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700')
 ]
-RUN_OPTIONS = RUN_OPTION_10 + RUN_OPTION_20 + RUN_OPTION_30
-# RUN_OPTIONS = RUN_OPTION_11
 
-results.summary_graphs_combinations['00_all'] = RUN_OPTIONS
-results.summary_graphs_combinations['10_capexpansion'] = RUN_OPTION_10
-# results.summary_graphs_combinations['11_capexpansion'] = RUN_OPTION_11
 
-results.summary_graphs_combinations['20_covobligations_macrocell_only_700'] = RUN_OPTION_20
-results.summary_graphs_combinations['30_covobligations_smallcell_and_spec'] = RUN_OPTION_30
-results.summary_graphs_combinations['40_covobligations'] = RUN_OPTION_20 + RUN_OPTION_30
+RUN_OPTIONS = RUN_OPTION_100 + RUN_OPTION_200 + RUN_OPTION_300
+
+results.summary_graphs_combinations['000_all'] = RUN_OPTIONS
+results.summary_graphs_combinations['100_capexpansion'] = RUN_OPTION_100
+
+results.summary_graphs_combinations['200_covobligations_macrocell_only_700'] = RUN_OPTION_200
+results.summary_graphs_combinations['300_covobligations_smallcell_and_spec'] = RUN_OPTION_300
+results.summary_graphs_combinations['400_covobligations'] = RUN_OPTION_200 + RUN_OPTION_300
 
 # for key, value in results.summary_graphs_combinations.items():
 #     print (value)
@@ -214,7 +224,7 @@ COVERAGE_OBLIGATIONS = {
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0,
-        'budget_limit': True,
+        'budget_limit': False,
         'descending_order': True,
         'invest_by_demand': True,
         'percentage_covered': 1,
@@ -230,7 +240,7 @@ COVERAGE_OBLIGATIONS = {
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0.18,
-        'budget_limit': True,
+        'budget_limit': False,
         'descending_order': True,
         'invest_by_demand': True,
         'percentage_covered': 1, # This does not do anything
@@ -246,7 +256,7 @@ COVERAGE_OBLIGATIONS = {
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0,
-        'budget_limit': True,
+        'budget_limit': False,
         'descending_order': False,
         'invest_by_demand': True,
         'percentage_covered': 0.90,
@@ -262,7 +272,7 @@ COVERAGE_OBLIGATIONS = {
         'population_limit_boolean': True,
         'population_limit': 800,
         'deploiement_prioritaire': 0,
-        'budget_limit': True,
+        'budget_limit': False,
         'descending_order': True,
         'invest_by_demand': True, #
         'percentage_covered': 0.90,
@@ -278,7 +288,7 @@ COVERAGE_OBLIGATIONS = {
         'population_limit_boolean': False,
         'population_limit': None,
         'deploiement_prioritaire': 0,
-        'budget_limit': True,
+        'budget_limit': False,
         'descending_order': True,
         'invest_by_demand': True, #
         'percentage_covered': 0.95,
@@ -639,7 +649,8 @@ def _fill_initial_info_in_results(results, system, chart1, chart2, chart3, chart
 # - run over population scenario / demand scenario / intervention strategy combinations
 # - output demand, capacity, opex, energy demand, built interventions, build costs per year
 ################################################################
-for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
+SIMULATION_START_TIME = time.time()
+for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy in RUN_OPTIONS:
     print('----------------------------------')
     print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
     assets = initial_system[:]
@@ -716,14 +727,14 @@ for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligat
 
         # Fill capacity margins per year
         for pcd in sorted(system.postcode_sectors.values(), key=lambda pcd: -pcd.population_density):
-            chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin) # Capacity_margin
-            chart4.add_cap_and_demand(pcd.id, year, pcd.capacity, pcd.demand, pcd.threshold_demand) # Fill capacity, demand and population covered per year
+            chart2.add_cap_margin(pcd.id, year, pcd.capacity_margin)
+            chart4.add_cap_and_demand(pcd.id, year, pcd.capacity, pcd.demand, pcd.threshold_demand)
             chart1.add_population_covered(pcd.id, year, pcd.capacity, pcd.demand, pcd.population, pcd.threshold_demand)
 
         # Fill capacity margins per year
         for lad in sorted(system.ofcom_lads.values(), key=lambda lad: -lad.population_density):
-            chart2_lads.add_cap_margin(lad.id, year, lad.capacity_margin) # Capacity_margin
-            chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage) # Fill capacity, demand and population covered per year
+            chart2_lads.add_cap_margin(lad.id, year, lad.capacity_margin)
+            chart4_lads.add_cap_and_demand(lad.id, year, lad.capacity, lad.demand, lad.coverage)
 
         chart5.add_initial_info(results, system, index, year)
 
@@ -738,11 +749,14 @@ for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligat
     save_data.write_chart_4(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
     save_data.write_chart_5(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
 
-    save_data.write_chart_1_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_2_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_3_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
-    save_data.write_chart_4_LADs(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_1_lads(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_2_lads(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_3_lads(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
+    save_data.write_chart_4_lads(system, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER)
 
 save_data.write_general_charts(system, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER)
+SIMULATION_END_TIME = time.time()
+elapsed_time_secs = SIMULATION_END_TIME - SIMULATION_START_TIME
+print("Execution finished")
+print("Execution took: %s HH:MM:SS" % timedelta(seconds=round(elapsed_time_secs)))
 
-print ("Execution finished")

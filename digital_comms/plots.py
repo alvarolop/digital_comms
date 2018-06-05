@@ -13,8 +13,8 @@ def plot_chart(ict_manager, results, chart, col_pop, col_pop_agg, col_value, col
     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
     
     fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
-    fig.suptitle(title)
     ax = fig.subplots()
+    ax.set_title(title)
     ax.set_xlabel(ax_names[0])
     ax.set_ylabel(ax_names[1])
     ax.grid(True)
@@ -39,6 +39,56 @@ def plot_chart(ict_manager, results, chart, col_pop, col_pop_agg, col_value, col
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
     plt.close(fig)
 
+
+def plot_years(ict_manager, results, chart, TIMESTEPS, col_time, col_value, title, ax_names, type, name, index, col_demand=-1):
+    metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
+    fig = plt.figure()
+    ax = plt.subplot(111)
+
+    ax.set_xlabel(ax_names[0])
+    ax.set_ylabel(ax_names[1])
+    ax.set_title(title)
+    ax.grid(True)
+
+    if type == 'Percentage':
+        y_values = [value[col_value] * 100 for key, value in chart._table.items()]
+    else:
+        y_values = [value[col_value] for key, value in chart._table.items()]
+    x_values = [value[col_time] for key, value in chart._table.items()]
+
+    # Print a vertical line when cover demand starts
+    if col_demand > 0:
+        year_start_invest_demand = 0
+        for key, value in chart._table.items():
+            if value[col_demand] == 1:
+                year_start_invest_demand = value[col_time]
+                break
+        if year_start_invest_demand > 0:
+            plt.axvline(x=year_start_invest_demand, color='g')
+
+    ax.plot(x_values, y_values)
+
+    if type == 'Cost':
+        # Homogenize plotting of cap margin
+        y_values = np.linspace(0, 6 * 10 ** 8, 11)
+        x_values = np.linspace(2020, 2030, 11)
+        ax.plot(x_values, y_values, alpha=0)
+
+    elif type == 'Percentage':
+        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
+        # Homogenize plotting of population covered
+        y_values = np.linspace(30, 100, 11)
+        x_values = np.linspace(2020, 2030, 11)
+        ax.plot(x_values, y_values, alpha=0)
+    else:
+        # Homogenize plotting of cap margin
+        y_values = np.linspace(-2000, 5000, 11)
+        x_values = np.linspace(2020, 2030, 11)
+        ax.plot(x_values, y_values, alpha=0)
+
+    fig.savefig(metrics_filename + '.svg', format='svg', dpi=100)
+    plt.close(fig)
+
     
 def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, ax_names, name, index):
     
@@ -46,7 +96,7 @@ def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, 
     
     fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
     fig.suptitle(title)
-    axlist = [fig.add_subplot(len(columns),1,i+1) for i in range(len(columns))]
+    axlist = [fig.add_subplot(len(columns), 1, i+1) for i in range(len(columns))]
         
     # TODO: Modify X axis values to fit population increment  
     
@@ -128,29 +178,7 @@ def plot_chart_detail_per_year(ict_manager, results, chart, pop_sum, columns, ti
         plt.close(fig)
 
 
-# def plot_histogram_cap_margin(ict_manager, results, chart, TIMESTEPS, cumulative, col_value, title, ax_names, name, index):
-#     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
-#
-#     fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
-#     ax = fig.subplots()
-#
-#     ax.set_xlabel(ax_names[0])
-#     ax.set_ylabel(ax_names[1])
-#     ax.set_title(title)
-#     ax.grid(True)
-#
-#     values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
-#
-#     n, bins, patches = plt.hist(values, bins=100, range=(results.cap_margin_bounds_plot[0], results.cap_margin_bounds_plot[1]), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
-#
-#     formatter = mtick.FuncFormatter(lambda v, pos: '{:3.3f}%'.format(v * 100))
-#     ax.yaxis.set_major_formatter(formatter)
-#
-#     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-#     plt.close(fig)
-
-
-def plot_histogram(ict_manager, results, chart, TIMESTEPS, cumulative, percentage_x_axis, col_value, title, ax_names, name, index):
+def plot_histogram(ict_manager, results, chart, TIMESTEPS, cumulative, hist_type, col_value, title, ax_names, name, index):
     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
 
     fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
@@ -163,9 +191,12 @@ def plot_histogram(ict_manager, results, chart, TIMESTEPS, cumulative, percentag
 
     values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
 
-    n, bins, patches = plt.hist(values, bins=100, range=(0, 100), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
-
-    if percentage_x_axis:
+    if hist_type == 'Capacity':
+        n, bins, patches = plt.hist(values, bins=100, range=(results.cap_margin_bounds_plot[0],
+                                                         results.cap_margin_bounds_plot[1]),
+                                density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
+    elif hist_type == 'Percentage':
+        n, bins, patches = plt.hist(values, bins=100, range=(0, 100), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
         xformatter = mtick.FormatStrFormatter('%.0f%%')
         ax.xaxis.set_major_formatter(xformatter)
 
