@@ -145,7 +145,7 @@ AVAILABLE_STRATEGY_INTERVENTIONS = {
     # Deploy a small cell layer at 3700 MHz
     # The cost will include the small cell unit and the civil works per cell
     'small_cell_and_spectrum': ('upgrade_to_lte', 'carrier_700', 'carrier_3500', 'small_cell'),
-                                
+
     # Intervention Strategy 5: Alvaro
      # Integrate 700
     'macrocell_only_700': ('only_700'),
@@ -254,14 +254,12 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
             popu_with_no_assets += area.population
             area_with_no_assets += area.area
 
-            # print(str(area_with_no_assets))
-
         # integrate_800 and integrate_2.6
         if 'upgrade_to_lte' in available_interventions:
             build_option = INTERVENTIONS['upgrade_to_lte']['assets_to_build']
             cost = INTERVENTIONS['upgrade_to_lte']['cost']
             
-            previous_capacity = _get_new_capacity(area, area_interventions)
+            # previous_capacity = _get_new_capacity(area, area_interventions)
             for site_ngr, site_assets in assets_by_site.items():
                 if site_ngr == 'small_cell_sites': 
                     continue
@@ -273,34 +271,23 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                         to_build['pcd_sector'] = area.id
                         to_build['build_date'] = timestep
                         area_interventions.append(to_build)
-                        
-                        # Get capacity with the new asset
-                        new_capacity = _get_new_capacity(area, area_interventions)
-                        
-                        # If capacity hasn´t grown, then break for this PCD
-                        if new_capacity <= previous_capacity:
-                            if area.id in PRINT_PCDS:
-                                print(area.id + " => Break")
-                            break
-                        if area.id in PRINT_PCDS:
-                            print(
-                                "Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(
-                                    area.id, len(list(area.assets)), len(area_interventions), previous_capacity,
-                                    new_capacity, area.threshold_demand, area.demand))
-
-                        # If capacity can grow, then new loop
-                        previous_capacity = new_capacity
-                        
                         built_interventions.append(to_build)
-                        chart3.add_tech(area.id, timestep, 'LTE')
-                        chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'LTE')
-                    
+
                     budget -= cost
                     spend.append((area.id, area.lad_id, 'upgrade_to_lte', cost))
                     chart1.add_cost(area.id, timestep, cost)
                     chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
-                    if results.co_budget_limit and budget < 0:
-                        break
+                    chart3.add_tech(area.id, timestep, 'LTE')
+                    chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'LTE')
+
+                    # # Get capacity with the new asset
+                    # new_capacity = _get_new_capacity(area, area_interventions)
+                    # if new_capacity <= previous_capacity:
+                    #     break
+                    # previous_capacity = new_capacity
+
+                if results.co_budget_limit and budget < 0 or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
+                    break
 
         if results.co_budget_limit and budget < 0:
             break
@@ -310,47 +297,41 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
             if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                 continue
             
-            build_option = INTERVENTIONS['carrier_700']['assets_to_build']
+            build_option = INTERVENTIONS['carrier_700']['assets_to_build'][0]
             cost = INTERVENTIONS['carrier_700']['cost']
-            
-            previous_capacity = _get_new_capacity(area, area_interventions)
+            # previous_capacity = _get_new_capacity(area, area_interventions)
             for site_ngr, site_assets in assets_by_site.items():
                 if site_ngr == 'small_cell_sites':
                     continue
-                if 'LTE' in [asset['technology'] for asset in site_assets] and \
-                        '700' not in [asset['frequency'] for asset in site_assets]:
+                if 'LTE' in [asset['technology'] for asset in site_assets] and '700' not in [asset['frequency'] for asset in site_assets]:
                             
                     # set both assets to this site_ngr
-                    for option in build_option:
-                        to_build = copy.copy(option)
-                        to_build['site_ngr'] = site_ngr
-                        to_build['pcd_sector'] = area.id
-                        to_build['build_date'] = timestep
-                        area_interventions.append(to_build)
-                        
-                        # Get capacity with the new asset
-                        new_capacity = _get_new_capacity(area, area_interventions)
-                        
-                        # If capacity hasn´t grown, then break for this PCD
-                        if new_capacity <= previous_capacity:
-                            if area.id in PRINT_PCDS:
-                                print(area.id + " => Break")
-                            break
+                    # for option in build_option:
+                    to_build = copy.copy(build_option)
+                    to_build['site_ngr'] = site_ngr
+                    to_build['pcd_sector'] = area.id
+                    to_build['build_date'] = timestep
+                    area_interventions.append(to_build)
 
-                        if area.id in PRINT_PCDS:
-                            print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
-                        # If capacity can grow, then new loop
-                        previous_capacity = new_capacity
-                
-                        built_interventions.append(to_build)
-                        chart3.add_tech(area.id, timestep, 'carrier_700')
-                        chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
-                        
-                    spend.append((area.id, area.lad_id, 'carrier_700', cost))
+                    # # Get capacity with the new asset
+                    # new_capacity = _get_new_capacity(area, area_interventions)
+                    # if new_capacity <= previous_capacity:
+                    #     # if area.id in PRINT_PCDS:
+                    #     #     print(area.id + " => Break")
+                    #     break
+
+                    # if area.id in PRINT_PCDS:
+                    #     print ("Area = {},  Assets = {}, New assets = {}, Cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), _get_new_capacity(area, area_interventions), area.threshold_demand, area.demand))
+                    # previous_capacity = new_capacity
+
+                    built_interventions.append(to_build)
                     chart1.add_cost(area.id, timestep, cost)
                     chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
+                    chart3.add_tech(area.id, timestep, 'carrier_700')
+                    chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'carrier_700')
                     budget -= cost
-                    if results.co_budget_limit and budget < 0:
+                    spend.append((area.id, area.lad_id, 'carrier_700', cost))
+                    if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                         break
 
         if results.co_budget_limit and budget < 0:
@@ -404,7 +385,9 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
                 if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                     break
                        
-        
+        if results.co_budget_limit and budget < 0:
+            break
+
         # integrate_3.5
         if 'carrier_3500' in available_interventions and timestep >= 2020:
             if _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
@@ -445,38 +428,36 @@ def _suggest_interventions(system, budget, available_interventions, areas, times
             build_option = INTERVENTIONS['small_cell']['assets_to_build']
             cost = INTERVENTIONS['small_cell']['cost']
             
-            previous_capacity = _get_new_capacity(area, area_interventions) 
+            # previous_capacity = _get_new_capacity(area, area_interventions)
             
             while True:
                 to_build = copy.deepcopy(build_option)
                 to_build[0]['build_date'] = timestep
                 to_build[0]['pcd_sector'] = area.id
-
                 area_interventions += to_build
                 
-                # Get capacity with the new asset
-                new_capacity = _get_new_capacity(area, area_interventions)
-                
-                # If capacity hasn´t grown, then break for this PCD
-                if new_capacity <= previous_capacity:
-                    if area.id in PRINT_PCDS:
-                       print (area.id + " => Break")
-                    break
-
-                if area.id in PRINT_PCDS:
-                    print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
-
-                # If capacity can grow, then new loop
-                previous_capacity = new_capacity
+                # # Get capacity with the new asset
+                # new_capacity = _get_new_capacity(area, area_interventions)
+                #
+                # # If capacity hasn´t grown, then break for this PCD
+                # if new_capacity <= previous_capacity:
+                #     if area.id in PRINT_PCDS:
+                #        print (area.id + " => Break")
+                #     break
+                #
+                # if area.id in PRINT_PCDS:
+                #     print ("Area = {},  Assets = {}, New assets = {}, Previous cap = {}, Current cap = {}, Cov. Oblig = {}, Demand = {}".format(area.id, len(list(area.assets)), len(area_interventions), previous_capacity, new_capacity, area.threshold_demand, area.demand))
+                #
+                # # If capacity can grow, then new loop
+                # previous_capacity = new_capacity
 
                 built_interventions += to_build
-                spend.append((area.id, area.lad_id, 'small_cells', cost))
                 chart1.add_cost(area.id, timestep, cost)
                 chart1_lads.add_cost(area.ofcom_lad_id, timestep, cost)
                 chart3.add_tech(area.id, timestep, 'small_cells')
                 chart3_lads.add_tech(area.ofcom_lad_id, timestep, 'small_cells')
                 budget -= cost
-
+                spend.append((area.id, area.lad_id, 'small_cells', cost))
                 if (results.co_budget_limit and budget < 0) or _area_satisfied(area, area_interventions, system, results, service_obligation_boolean):
                     break
 

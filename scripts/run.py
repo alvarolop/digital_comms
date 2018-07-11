@@ -93,8 +93,7 @@ COVERAGE_OBLIGATION_SCENARIOS = [
 ]
 
 #    for pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy  in RUN_OPTIONS:
-
-# 1. Variaciones de capacity expansion strategies
+# A. Variaciones de capacity expansion strategies
 RUN_OPTION_100 = [
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
@@ -104,6 +103,88 @@ RUN_OPTION_100 = [
     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
 ]
 
+
+# B. Variaciones de coverage obligations
+# Parte 1: Se calcula y se representa. 1 estrategia, todas las obligaciones
+RUN_OPTION_200 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'minimal')
+]
+RUN_OPTION_300 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell')
+]
+RUN_OPTION_400 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700')
+]
+RUN_OPTION_500 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell')
+]
+RUN_OPTION_600 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum')
+]
+
+RUN_OPTION_700 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700')
+]
+
+# Parte B: Solo se pinta, no se recalcula Representaciones 1 obligacion, todas las estrategias
+RUN_OPTION_2100 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700')
+]
+RUN_OPTION_3100 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700')
+]
+RUN_OPTION_4100 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700')
+]
+RUN_OPTION_5100 = [
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'minimal'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum'),
+    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700')
+]
+
+# # C. Variaciones de escenarios de población y demanda
 # RUN_OPTION_101 = [
 #     ('low', 'low', 'low', 'cov_ob_1', 'minimal'),
 #     ('low', 'low', 'low', 'cov_ob_1', 'macrocell'),
@@ -112,7 +193,6 @@ RUN_OPTION_100 = [
 #     ('low', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('low', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_102 = [
 #     ('low', 'baseline', 'low', 'cov_ob_1', 'minimal'),
 #     ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
@@ -121,7 +201,6 @@ RUN_OPTION_100 = [
 #     ('low', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('low', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_103 = [
 #     ('low', 'high', 'low', 'cov_ob_1', 'minimal'),
 #     ('low', 'high', 'low', 'cov_ob_1', 'macrocell'),
@@ -130,7 +209,6 @@ RUN_OPTION_100 = [
 #     ('low', 'high', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('low', 'high', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_104 = [
 #     ('baseline', 'low', 'low', 'cov_ob_1', 'minimal'),
 #     ('baseline', 'low', 'low', 'cov_ob_1', 'macrocell'),
@@ -139,7 +217,6 @@ RUN_OPTION_100 = [
 #     ('baseline', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('baseline', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_105 = [
 #     ('baseline', 'high', 'low', 'cov_ob_1', 'minimal'),
 #     ('baseline', 'high', 'low', 'cov_ob_1', 'macrocell'),
@@ -148,7 +225,6 @@ RUN_OPTION_100 = [
 #     ('baseline', 'high', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('baseline', 'high', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_106 = [
 #     ('high', 'low', 'low', 'cov_ob_1', 'minimal'),
 #     ('high', 'low', 'low', 'cov_ob_1', 'macrocell'),
@@ -157,7 +233,6 @@ RUN_OPTION_100 = [
 #     ('high', 'low', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('high', 'low', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_107 = [
 #     ('high', 'baseline', 'low', 'cov_ob_1', 'minimal'),
 #     ('high', 'baseline', 'low', 'cov_ob_1', 'macrocell'),
@@ -166,7 +241,6 @@ RUN_OPTION_100 = [
 #     ('high', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
 #     ('high', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700')
 # ]
-#
 # RUN_OPTION_108 = [
 #     ('high', 'high', 'low', 'cov_ob_1', 'minimal'),
 #     ('high', 'high', 'low', 'cov_ob_1', 'macrocell'),
@@ -177,45 +251,70 @@ RUN_OPTION_100 = [
 # ]
 
 
-# 2. Variaciones de coverage obligations para macrocell_only_700
-RUN_OPTION_200 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum'),
-    ('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum')
-]
+# # 0. CUSTOM RUN
+# CUSTOM_RUN = [
+#     ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
+# ]
+# RUN_OPTIONS = CUSTOM_RUN
+# results.summary_graphs_combinations['000_custom_run'] = CUSTOM_RUN
+# RUN_OPTIONS = RUN_OPTION_600
+# results.summary_graphs_combinations['000_custom_run'] = RUN_OPTION_100
 
-# 3. Variaciones de coverage obligations para small_cell_and_spectrum
-RUN_OPTION_300 = [
-    ('baseline', 'baseline', 'low', 'cov_ob_1', 'macrocell_only_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_only_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_only_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_only_700'),
-    ('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_only_700')
-]
+# # A. Variaciones de capacity expansion strategies
+# RUN_OPTIONS = RUN_OPTION_100
+# results.summary_graphs_combinations['100_capexpansion'] = RUN_OPTION_100
+#
+# B. Variaciones de coverage obligations
+RUN_OPTIONS = RUN_OPTION_200 + RUN_OPTION_300 + RUN_OPTION_400 + RUN_OPTION_500 + RUN_OPTION_600 + RUN_OPTION_700
 
+# # Gráficas auxiliares para sacar los precios vs población en casos concretos
+# results.summary_graphs_combinations['0002_A_'] = [('baseline', 'baseline', 'low', 'cov_ob_2', 'small_cell_and_spectrum')]
+# results.summary_graphs_combinations['0002_B_'] = [('baseline', 'baseline', 'low', 'cov_ob_2', 'macrocell_700')]
+# results.summary_graphs_combinations['0003_A_'] = [('baseline', 'baseline', 'low', 'cov_ob_3', 'small_cell_and_spectrum')]
+# results.summary_graphs_combinations['0003_B_'] = [('baseline', 'baseline', 'low', 'cov_ob_3', 'macrocell_700')]
+# results.summary_graphs_combinations['0004_A_'] = [('baseline', 'baseline', 'low', 'cov_ob_4', 'small_cell_and_spectrum')]
+# results.summary_graphs_combinations['0004_B_'] = [('baseline', 'baseline', 'low', 'cov_ob_4', 'macrocell_700')]
+# results.summary_graphs_combinations['0005_A_'] = [('baseline', 'baseline', 'low', 'cov_ob_5', 'small_cell_and_spectrum')]
+# results.summary_graphs_combinations['0005_B_'] = [('baseline', 'baseline', 'low', 'cov_ob_5', 'macrocell_700')]
 
-RUN_OPTIONS = RUN_OPTION_100 + RUN_OPTION_200 + RUN_OPTION_300
+# Cada grafica tiene: 1 capacity expansion y todas las obligaciones cobertura
+results.summary_graphs_combinations['100_capexpansion'] = RUN_OPTION_100
+results.summary_graphs_combinations['200_covobligations_minimal'] = RUN_OPTION_200
+results.summary_graphs_combinations['300_covobligations_macrocell'] = RUN_OPTION_300
+results.summary_graphs_combinations['400_covobligations_macrocell_700'] = RUN_OPTION_400
+results.summary_graphs_combinations['500_covobligations_smallcell'] = RUN_OPTION_500
+results.summary_graphs_combinations['600_covobligations_smallcell_and_spec'] = RUN_OPTION_600
+results.summary_graphs_combinations['700_covobligations_macrocell_only_700'] = RUN_OPTION_700
 
 results.summary_graphs_combinations['000_all'] = RUN_OPTIONS
-results.summary_graphs_combinations['100_capexpansion'] = RUN_OPTION_100
 
-results.summary_graphs_combinations['200_covobligations_macrocell_only_700'] = RUN_OPTION_200
-results.summary_graphs_combinations['300_covobligations_smallcell_and_spec'] = RUN_OPTION_300
-results.summary_graphs_combinations['400_covobligations'] = RUN_OPTION_200 + RUN_OPTION_300
+# Cada gráfica tiene: 1 obligacion de cobertura y todas las capacity expansion
+results.summary_graphs_combinations['1100_covobligations_1'] = RUN_OPTION_100
+results.summary_graphs_combinations['2100_covobligations_2'] = RUN_OPTION_2100
+results.summary_graphs_combinations['3100_covobligations_3'] = RUN_OPTION_3100
+results.summary_graphs_combinations['4100_covobligations_4'] = RUN_OPTION_4100
+results.summary_graphs_combinations['5100_covobligations_5'] = RUN_OPTION_5100
 
-# for key, value in results.summary_graphs_combinations.items():
-#     print (value)
 
-# RUN_OPTIONS = [
-#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_700'),
-#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'macrocell_only_700'),
-#     # ('baseline', 'baseline', 'baseline', 'cov_ob_1', 'small_cell_and_spectrum'),
-#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_700'),
-#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'macrocell_only_700'),
-#     # ('baseline', 'baseline', 'high', 'cov_ob_1', 'small_cell_and_spectrum'),
-# ]
+
+
+
+
+
+
+
+# # C. Variaciones de escenarios de población y demanda
+# RUN_OPTIONS = RUN_OPTION_100 + RUN_OPTION_101 + RUN_OPTION_102 + RUN_OPTION_103 + RUN_OPTION_104 + RUN_OPTION_105 + RUN_OPTION_106 + RUN_OPTION_107 + RUN_OPTION_108
+# results.summary_graphs_combinations['000_all'] = RUN_OPTIONS
+# results.summary_graphs_combinations['100_scenario_base_base'] = RUN_OPTION_100
+# results.summary_graphs_combinations['101_scenario_low_low'] = RUN_OPTION_101
+# results.summary_graphs_combinations['102_scenario_low_base'] = RUN_OPTION_102
+# results.summary_graphs_combinations['103_scenario_low_high'] = RUN_OPTION_103
+# results.summary_graphs_combinations['104_scenario_base_low'] = RUN_OPTION_104
+# results.summary_graphs_combinations['105_scenario_base_high'] = RUN_OPTION_105
+# results.summary_graphs_combinations['106_scenario_high_low'] = RUN_OPTION_106
+# results.summary_graphs_combinations['107_scenario_high_base'] = RUN_OPTION_107
+# results.summary_graphs_combinations['108_scenario_high_high'] = RUN_OPTION_108
 
 COVERAGE_OBLIGATIONS = {
     'cov_ob_1': { # ORIGINAL
@@ -283,7 +382,7 @@ COVERAGE_OBLIGATIONS = {
         },
     },
     'cov_ob_5': { # The UK
-        'name': 'Develop countries',
+        'name': 'Nation-balanced',
         'description': 'UK coverage obligation',
         'population_limit_boolean': False,
         'population_limit': None,
@@ -653,6 +752,8 @@ SIMULATION_START_TIME = time.time()
 for pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy in RUN_OPTIONS:
     print('----------------------------------')
     print("Running:", coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
+    results.current_run_option = [(pop_scenario, throughput_scenario, coverage_speed_scenario, coverage_obligation_type, intervention_strategy)]
+
     assets = initial_system[:]
     index = save_data._get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_speed_scenario, intervention_strategy)
 

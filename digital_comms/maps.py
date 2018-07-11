@@ -66,7 +66,7 @@ def print_map(chart, title, column, results, name, index, colormap):
     plt.close(fig)
 
 
-def print_map_year_all(chart, title, column, timesteps, zero_to_100, results, name, index, colormap):
+def print_map_year_all(chart, title, column, timesteps, value_type, results, name, index, colormap):
     sf = shapefile.Reader(results.shapefile_path)
     metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
     metrics_filename_pdf = os.path.join(results.output_path, 'maps', 'auxgifs', name + '_' + index)
@@ -75,9 +75,13 @@ def print_map_year_all(chart, title, column, timesteps, zero_to_100, results, na
     axlist = [fig.add_subplot(3, 4, i+1) for i in range(12)]
 
     # Get max and min value for the color map:
-    if zero_to_100:
+    if value_type == 'Percentage':
         max_value = 1
         min_value = 0
+    elif value_type == 'Margin':
+        max_value = max(abs(max([i[column][year] for i in chart.table.values() for year in timesteps])),
+                        abs(min([i[column][year] for i in chart.table.values() for year in timesteps])))
+        min_value = -max_value
     else:
         max_value = max([i[column][year] for i in chart.table.values() for year in timesteps])
         min_value = min([i[column][year] for i in chart.table.values() for year in timesteps])
@@ -157,13 +161,19 @@ def print_tech_map_aggregated(chart, title, columns, results, name, index, color
     metrics_filename = os.path.join(results.output_path, 'maps', name + '_' + index)
     titles = ['LTE', '700 MHz']
 
-    fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
-    fig.suptitle(title, fontsize=16)
+    # fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
+    # fig.suptitle(title, fontsize=16)
+    fig = plt.figure()  # Notice the equal aspect ratio
+    fig.suptitle(title)
     axlist = [fig.add_subplot(1, len(columns), i+1) for i in range(len(columns))]
 
     # Get max and min value for the color map:
+
     max_value = max([i[column] for i in chart.table.values() for column in columns])
     min_value = min([i[column] for i in chart.table.values() for column in columns])
+
+    # Get max and min value for the color map:
+
 
     column_number = 0
     for column in columns:
@@ -186,7 +196,7 @@ def print_tech_map_aggregated(chart, title, columns, results, name, index, color
 #            print(str(chart.get_value(sr.record[0])[column]))
             _paint_region(ax, sr.shape, color)
 
-    fig.subplots_adjust(wspace=0, hspace=0.200)
+    #fig.subplots_adjust(wspace=0, hspace=0.200)
     #    Colorbar is coded based on this link: https://stackoverflow.com/questions/8342549/matplotlib-add-colorbar-to-a-sequence-of-line-plots
     #    Colorbar API: https://matplotlib.org/api/colorbar_api.html
     sm = plt.cm.ScalarMappable(cmap=palette, norm=plt.Normalize(vmin=min_value, vmax=max_value))

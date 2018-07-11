@@ -19,14 +19,8 @@ def plot_chart(ict_manager, results, chart, col_pop, col_pop_agg, col_value, col
     ax.set_ylabel(ax_names[1])
     ax.grid(True)
 
-    # if(True):
     x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart)
     ax.plot(x_values, y_values)
-    # else:
-    #     x_values = [value[0] for key,value in chart._table.items()]
-    #     y_values = [value[col_value_agg] for key,value in chart._table.items()]
-    #     ax.plot(np.arange(len(x_values)), y_values)
-    #     ax.set_xticklabels(x_values)
 
     # Plot the chart until 100%
     y_values = np.linspace(0, results.population_2020, 1000)
@@ -52,9 +46,12 @@ def plot_years(ict_manager, results, chart, TIMESTEPS, col_time, col_value, titl
 
     if type == 'Percentage':
         y_values = [value[col_value] * 100 for key, value in chart._table.items()]
+        x_values = [value[col_time] for key, value in chart._table.items()]
+    # elif type == 'Thi_no_important':
+        # x_values, y_values = _get_axis_values(1000, col_pop, col_pop_agg, col_value, col_value_agg, results, chart, coverage_obligation_type)
     else:
         y_values = [value[col_value] for key, value in chart._table.items()]
-    x_values = [value[col_time] for key, value in chart._table.items()]
+        x_values = [value[col_time] for key, value in chart._table.items()]
 
     # Print a vertical line when cover demand starts
     if col_demand > 0:
@@ -69,7 +66,7 @@ def plot_years(ict_manager, results, chart, TIMESTEPS, col_time, col_value, titl
     ax.plot(x_values, y_values)
 
     if type == 'Cost':
-        # Homogenize plotting of cap margin
+        # Homogenize plotting of costs
         y_values = np.linspace(0, 6 * 10 ** 8, 11)
         x_values = np.linspace(2020, 2030, 11)
         ax.plot(x_values, y_values, alpha=0)
@@ -82,7 +79,7 @@ def plot_years(ict_manager, results, chart, TIMESTEPS, col_time, col_value, titl
         ax.plot(x_values, y_values, alpha=0)
     else:
         # Homogenize plotting of cap margin
-        y_values = np.linspace(-2000, 5000, 11)
+        y_values = np.linspace(-50, 150, 11)
         x_values = np.linspace(2020, 2030, 11)
         ax.plot(x_values, y_values, alpha=0)
 
@@ -107,14 +104,12 @@ def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, 
 
         x_elements = [value[0] for key,value in chart._table.items()]
         y_values = [value[column] for key,value in chart._table.items()]
-        x_values = np.linspace(0,100,len(x_elements))
+        x_values = np.linspace(0, 100, len(x_elements))
         
         ax.set_xlabel(ax_names[0])
         ax.set_ylabel(ax_names[column_number + 1])
         
         ax.plot(x_values, y_values, color='b', linewidth=1/3)
-
-#        ax.set_xticklabels(x_values)
         column_number += 1
         
     ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
@@ -126,25 +121,23 @@ def plot_chart_comparison(ict_manager, results, chart, pop_sum, columns, title, 
 def plot_chart_per_year(ict_manager, results, chart, pop_sum, columns, timesteps, title, ax_names, name, index):
     metrics_filename = os.path.join(results.output_path, 'figures', name + '_' + index)
     
-    fig = plt.figure(figsize=(8,8)) # Notice the equal aspect ratio
+    fig = plt.figure(figsize=(8, 8))  # Notice the equal aspect ratio
     fig.suptitle(title)
-    axlist = [fig.add_subplot(6,2,i+1) for i in range(len(timesteps))]
+    axlist = [fig.add_subplot(6, 2, i+1) for i in range(len(timesteps))]
 
     column_number = 0
     for year in timesteps:
         ax = axlist[year-timesteps[0]]
         ax.grid(True)
-        y_values = [value[columns[0]][year] for key,value in chart._table.items()]
+        y_values = [value[columns[0]][year] for key, value in chart._table.items()]
         
         ax.set_xlabel(ax_names[0])
         ax.set_ylabel(str(year))
         
-        x_elements = [value[0] for key,value in chart._table.items()]  
-        x_values = np.linspace(0,100,len(x_elements))
+        x_elements = [value[0] for key, value in chart._table.items()]
+        x_values = np.linspace(0, 100, len(x_elements))
                 
         ax.plot(x_values, y_values, color='b', linewidth=1/3)
-
-#        ax.set_xticklabels(x_values)
         column_number += 1
 
     ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
@@ -189,19 +182,33 @@ def plot_histogram(ict_manager, results, chart, TIMESTEPS, cumulative, hist_type
     ax.set_title(title)
     ax.grid(True)
 
-    values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
+    if cumulative:
+        alpha = 1
+        linewidth = 2.0
+        histtype = 'step'
+    else:
+        alpha = 1
+        linewidth = 2.0
+        histtype = 'bar'
 
     if hist_type == 'Capacity':
-        n, bins, patches = plt.hist(values, bins=100, range=(results.cap_margin_bounds_plot[0],
-                                                         results.cap_margin_bounds_plot[1]),
-                                density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
+        values = [value[col_value][2030] for key, value in chart._table.items()]
+        n, bins, patches = plt.hist(values, bins=100, range=(results.cap_margin_bounds_plot[0], results.cap_margin_bounds_plot[1]),
+                                density=True, cumulative=cumulative, alpha=alpha, linewidth=linewidth, histtype=histtype)
+        if cumulative:
+            yformatter = mtick.FuncFormatter(lambda v, pos: '{:3.0f}%'.format(v * 100))
+            ax.yaxis.set_major_formatter(yformatter)
+        else:
+            yformatter = mtick.FuncFormatter(lambda v, pos: '{:3.2f}%'.format(v * 100))
+            ax.yaxis.set_major_formatter(yformatter)
+
     elif hist_type == 'Percentage':
-        n, bins, patches = plt.hist(values, bins=100, range=(0, 100), density=True, cumulative=cumulative, facecolor='g', alpha=0.75)
+        values = [value[col_value][2030] * 100 for key, value in chart._table.items()]
+        n, bins, patches = plt.hist(values, bins=100, range=(0, 100), density=True, cumulative=cumulative, alpha=alpha, linewidth=linewidth, histtype=histtype)
         xformatter = mtick.FormatStrFormatter('%.0f%%')
         ax.xaxis.set_major_formatter(xformatter)
-
-    yformatter = mtick.FuncFormatter(lambda v, pos: '{:3.3f}%'.format(v * 100))
-    ax.yaxis.set_major_formatter(yformatter)
+        yformatter = mtick.FuncFormatter(lambda v, pos: '{:3.0f}%'.format(v * 100))
+        ax.yaxis.set_major_formatter(yformatter)
 
     fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
     plt.close(fig)
@@ -261,16 +268,16 @@ def plot_several_lines_years(ict_manager, results, run_options, TIMESTEPS, col_t
         index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
         nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results)
         chart = results.chart5_get_table(index)
-        
-        y_values = [value[col_value] * 100 for key,value in chart._table.items()]
-        x_values = [value[col_time] for key,value in chart._table.items()]  
 
+        if y_percentage_boolean:
+            y_values = [value[col_value] * 100 for key, value in chart._table.items()]
+        else:
+            y_values = [value[col_value] for key, value in chart._table.items()]
+        x_values = [value[col_time] for key, value in chart._table.items()]
         ax.plot(x_values, y_values, label=nice_index)
     
     if y_percentage_boolean:
-        fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-        yticks = mtick.FormatStrFormatter(fmt)
-        ax.yaxis.set_major_formatter(yticks)
+        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.0f%%'))
     
     # Shrink current axis's height by 50% on the bottom
     box = ax.get_position()
@@ -329,79 +336,15 @@ def _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, cov
     suffix = suffix.replace('baseline', 'base')
     return suffix
 
+
 def _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results):
-    
-    # dict_cov_ob = {'cov_ob_1': 'Custom   ', 'cov_ob_2': 'France    ', 'cov_ob_3': 'Germany', 'cov_ob_4': 'Spain      ', 'cov_ob_5': 'The UK   '}
-#    dict_cov_ob_speed = {'low': '2 mbps', 'baseline': '5 mbps', 'high': '8 mbps'}
     suffix = '{}, Pop: {}, Demand: {}, C.O.: {}mbps, Strategy: {}'.format\
-        (results.co_name.get(coverage_obligation_type,'New obligation'),
+        (results.co_name.get(coverage_obligation_type, 'New obligation'),
          pop_scenario,
          throughput_scenario,
          results.co_coverage_obligation.get(coverage_scenario, 'X'),
-         intervention_strategy)
-    # for length, use 'base' for baseline scenarios
+         results.strategy_name.get(intervention_strategy, 'New strategy'))
+
+    # For length, use 'base' for baseline scenarios
     suffix = suffix.replace('baseline', 'medium')
     return suffix
-
-    # def plot_several_lines_histogram(ict_manager, results, RUN_OPTIONS, TIMESTEPS, col_time, col_value, title, ax_names, name):
-    #    metrics_filename = os.path.join(results.output_path, 'figures/summary', name)
-    #
-    ##    https://docs.scipy.org/doc/numpy-1.14.0/reference/generated/numpy.histogram.html
-    ##    https://matplotlib.org/gallery/statistics/hist.html
-    ##    https://matplotlib.org/1.2.1/examples/pylab_examples/histogram_demo.html
-    ##    https://matplotlib.org/api/_as_gen/matplotlib.pyplot.hist.html#matplotlib.pyplot.hist
-    ##    https://matplotlib.org/tutorials/introductory/pyplot.html#sphx-glr-tutorials-introductory-pyplot-py
-    #
-    #    # Set Axis and Title
-    #    fig = plt.figure()
-    #    ax = plt.subplot(111)
-    #
-    #    ax.set_xlabel(ax_names[0])
-    #    ax.set_ylabel(ax_names[1])
-    #    ax.set_title(title)
-    #
-    #    for pop_scenario, throughput_scenario, coverage_scenario, coverage_obligation_type, intervention_strategy  in RUN_OPTIONS:
-    #        index = _get_suffix(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy)
-    #        nice_index = _get_nice_index(coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results)
-    #        chart = results.chart5_get_table(index)
-    #
-    #        y_values = [value[col_value] * 100 for key,value in chart._table.items()]
-    #        x_values = [value[col_time] for key,value in chart._table.items()]
-    #
-    #        # the histogram of the data
-    #        n, bins, patches = plt.hist(y_values, 200, density=True, facecolor='g', alpha=0.75)
-    #
-    #
-    ##        plt.xlabel('Smarts')
-    ##        plt.ylabel('Probability')
-    ##        plt.title('Histogram of IQ')
-    ##        ax.text(60, .025, r'$\mu=100,\ \sigma=15$')
-    ##        ax.axis([40, 160, 0, 0.03])
-    #        ax.grid(True)
-    #
-    #        # add a 'best fit' line
-    ##        y = mlab.normpdf( bins, mu, sigma)
-    ##        l = ax.plot(bins, y, 'r--', linewidth=1)
-    ##        ax.show()
-    #
-    ##        x = np.random.randn(500)
-    ##        data = [go.Histogram(x=x_values)]
-    #
-    ##        py.iplot(data, filename=metrics_filename)
-    ##        ax.plot(x_values, y_values, label=nice_index)
-    #        break
-    #
-    ##    fmt = '%.0f%%' # Format you want the ticks, e.g. '40%'
-    ##    yticks = mtick.FormatStrFormatter(fmt)
-    ##    ax.yaxis.set_major_formatter(yticks)
-    #
-    #    # Shrink current axis's height by 50% on the bottom
-    #    box = ax.get_position()
-    #    ax.set_position([box.x0, box.y0 + box.height * 0.5, box.width, box.height * 0.5])
-    #
-    #    plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.20),
-    #           handletextpad=0.0, fancybox=True, shadow=True, fontsize='small')
-    #
-    #    fig.savefig(metrics_filename + '.svg', format='svg', dpi=1200)
-    #    plt.close(fig)
-

@@ -74,17 +74,17 @@ def write_chart_2(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         print('- Plotting Chart 2 PCDs...Capacity margin per year')
         plots.plot_chart_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS, "Capacity margin per year", ['PCDs'],
                                   '2_1_cap_margin_per_year_all', suffix)
-        # print('- Plotting Chart 2 PCDs...Capacity margin each year')
-        plots.plot_chart_detail_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS,
-                                         "Capacity margin in {} per PCD", ['PCD ID', "Capacity margin"],
-                                         '2_cap_margin_per_year_all', suffix)
+        # # print('- Plotting Chart 2 PCDs...Capacity margin each year')
+        # plots.plot_chart_detail_per_year(ict_manager, results, chart, 5, [4], TIMESTEPS,
+        #                                  "Capacity margin in {} per PCD", ['PCD ID', "Capacity margin"],
+        #                                  '2_cap_margin_per_year_all', suffix)
 
         print('- Plotting Chart 2 PCDs...capacity margin histogram')
         plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, False, 'Capacity', 4, "Capacity margin histogram",
-                                        ['Capacity margin', 'Frequency'], '2_2_cap_margin_histogram', suffix)
+                                        ['Capacity margin(Mbps/km2)', 'Frequency'], '2_2_cap_margin_histogram', suffix)
         print('- Plotting Chart 2 PCDs...capacity margin cumulative histogram CDF')
-        plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, True, 'Capacity', 4, "Capacity margin histogram",
-                                        ['Capacity margin', 'Frequency'], '2_2_cap_margin_CDF_histogram', suffix)
+        plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, True, 'Capacity', 4, "Capacity margin CDF",
+                                        ['Capacity margin(Mbps/km2)', 'Frequency'], '2_2_cap_margin_CDF_histogram', suffix)
 
 
 def write_chart_3(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
@@ -140,27 +140,28 @@ def write_chart_4(ict_manager, coverage_obligation_type, pop_scenario, throughpu
     if ENABLE_SUB_PLOTS:
         # Plotting
         print('- Plotting Chart 4 PCDs...Total capacity per year')
-        plots.plot_chart_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Total capacity per year", ['PCDs'],
+        plots.plot_chart_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Total capacity per year (Mbps/km2)", ['PCDs'],
                                   '4_1_capacity_per_year_all', suffix)
         print('- Plotting Chart 4 PCDs...Total demand per year')
-        plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total demand per year", ['PCDs'],
+        plots.plot_chart_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Total demand per year (Mbps/km2)", ['PCDs'],
                                   '4_2_demand_per_year_all', suffix)
 
-        print('- Plotting Chart 4 PCDs...Total capacity each year')
-        plots.plot_chart_detail_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Capacity in {} per PCD",
-                                         ['PCD ID', "Capacity"], '4_1_capacity_per_year_all', suffix)
-        print('- Plotting Chart 4 PCDs...Total demand each year')
-        plots.plot_chart_detail_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Demand in {} per PCD",
-                                         ['PCD ID', "Demand"], '4_2_demand_per_year_all', suffix)
+        # print('- Plotting Chart 4 PCDs...Total capacity each year')
+        # plots.plot_chart_detail_per_year(ict_manager, results, chart, 8, [4], TIMESTEPS, "Capacity in {} per PCD",
+        #                                  ['PCD ID', "Capacity (Mbps/km2)"], '4_1_capacity_per_year_all', suffix)
+        # print('- Plotting Chart 4 PCDs...Total demand each year')
+        # plots.plot_chart_detail_per_year(ict_manager, results, chart, 8, [5], TIMESTEPS, "Demand in {} per PCD",
+        #                                  ['PCD ID', "Demand (Mbps/km2)"], '4_2_demand_per_year_all', suffix)
 
         print('- Plotting Chart 4 PCDs...Total population covered per year')
         plots.plot_chart_per_year(ict_manager, results, chart, 8, [6], TIMESTEPS, "Total population covered per year",
                                         ['PCDs'], '4_3_pop_covered_per_year_all', suffix)
+
         print('- Plotting Chart 4 PCDs...Population covered histogram')
         plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, False, 'Percentage', 6, "Population covered histogram",
                                         ['% Population covered', 'Frequency'], '4_4_pop_covered_histogram', suffix)
         print('- Plotting Chart 4 PCDs...Population covered cumulative histogram CDF')
-        plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, True, 'Percentage', 6, "Population covered histogram",
+        plots.plot_histogram(ict_manager, results, chart, TIMESTEPS, True, 'Percentage', 6, "Population covered CDF",
                                         ['% Population covered', 'Frequency'], '4_4_pop_covered_CDF_histogram', suffix)
 
 
@@ -183,16 +184,16 @@ def write_chart_5(ict_manager, coverage_obligation_type, pop_scenario, throughpu
         metrics_writer.writerow((value[0], value[1], value[2], value[3], value[4], value[5], value[6], value[7]))
     metrics_file.close()
 
-    if ENABLE_SUB_PLOTS:
-        # Plotting
-        # print('- Plotting Chart 5 PCDs... Costs per year')
-        # plots.plot_years(ict_manager, results, chart, TIMESTEPS, 8, 9, 5, 7, "Total cost", ['Population Covered', 'Cost (£)'], '5_1_cost_per_year', suffix)
-        print('- Plotting Chart 5 PCDs... %Costs per year')
-        plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 2, "Investment", ['Time', 'Cost (£)'], 'Cost', '5_1_cost_per_year', suffix, 7)
-        print('- Plotting Chart 5 PCDs... % population covered per year')
-        plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 4, "Population covered", ['Time', 'Population percentage'], 'Percentage', '5_2_pop_covered_per_year', suffix, 7)
-        print('- Plotting Chart 5 PCDs... Capacity margin per year')
-        plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 6, "Capacity margin", ['Time', 'Capacity margin'], 'Capacity', '5_3_cap_margin_per_year', suffix, 7)
+    # Plotting
+    print('- Plotting Chart 5 PCDs... Costs per year')
+    plots.plot_several_lines_population(ict_manager, results, results.current_run_option, TIMESTEPS, 8, 9, 5, 7, "Population covered vs. cost", ['Population Covered', 'Cost (£)'], '0000_5_0_cost_vs_pop_covered_per_year_' + index)
+
+    print('- Plotting Chart 5 PCDs... %Costs per year')
+    plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 2, "Investment", ['Time', 'Cost (£)'], 'Cost', '5_1_cost_per_year', suffix, 7)
+    print('- Plotting Chart 5 PCDs... % population covered per year')
+    plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 4, "Population covered", ['Time', 'Population percentage'], 'Percentage', '5_2_pop_covered_per_year', suffix, 7)
+    print('- Plotting Chart 5 PCDs... Capacity margin per year')
+    plots.plot_years(ict_manager, results, chart, TIMESTEPS, 0, 6, "Capacity margin", ['Time', 'Capacity margin (Mbps/km2)'], 'Capacity', '5_3_cap_margin_per_year', suffix, 7)
 
 
 def write_chart_1_lads(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
@@ -223,7 +224,7 @@ def write_chart_1_lads(ict_manager, coverage_obligation_type, pop_scenario, thro
         print('- Drawing Chart 1 LADs...Total cost')
         maps.print_map(chart, "Total cost", 5, results, '1_3_aggregated_cost', suffix, 'OrRd')
         print('- Drawing Chart 1 LADs...Total cost during all years')
-        maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, False, results, '1_4_cost_per_year', suffix, 'OrRd')
+        maps.print_map_year_all(chart, "Total cost per year", 4, TIMESTEPS, 'else', results, '1_4_cost_per_year', suffix, 'OrRd')
         print('- Drawing Chart 1 LADs...Total cost per year')
         maps.print_map_per_year(chart, "Total cost year", 4, TIMESTEPS, results, 'lad_chart_1_cost_year', suffix, 'OrRd')
     
@@ -248,8 +249,8 @@ def write_chart_2_lads(ict_manager, coverage_obligation_type, pop_scenario, thro
     if ENABLE_SUB_PLOTS:
         # Maps
         print('- Drawing Chart 2 LADs...Capacity margin during all years')
-        maps.print_map_year_all(chart, "Capacity margin per year", 4, TIMESTEPS, False, results, '2_1_cap_margin_per_year', suffix, 'RdYlGn')
-        print('- Drawing Chart 2 LADs...Capacity margin per year')
+        maps.print_map_year_all(chart, "Capacity margin per year (Mbps/km2)", 4, TIMESTEPS, 'Margin', results, '2_1_cap_margin_per_year', suffix, 'RdYlGn')
+        print('- Drawing Chart 2 LADs...Capacity margin per year (Mbps/km2)')
         maps.print_map_per_year(chart, "Capacity margin year", 4, TIMESTEPS, results, '2_1_cap_margin_year', suffix, 'RdYlGn') # OrRd
 
     
@@ -284,9 +285,9 @@ def write_chart_3_lads(ict_manager, coverage_obligation_type, pop_scenario, thro
                                      suffix, 'Blues')  # OrRd
 
         print('- Drawing Chart 3 LADs...Total LTE upgrades during all years')
-        maps.print_map_year_all(chart, "LTE upgrades", 4, TIMESTEPS, False, results, '3_3_lte_upgrades_per_year', suffix, 'Blues')
+        maps.print_map_year_all(chart, "LTE upgrades", 4, TIMESTEPS, 'else', results, '3_3_lte_upgrades_per_year', suffix, 'Blues')
         print('- Drawing Chart 3 LADs...Total 700 MHz upgrades during all years')
-        maps.print_map_year_all(chart, "700 MHz upgrades", 5, TIMESTEPS, False, results, '3_3_700_upgrades_per_year', suffix, 'Blues')
+        maps.print_map_year_all(chart, "700 MHz upgrades", 5, TIMESTEPS, 'else', results, '3_3_700_upgrades_per_year', suffix, 'Blues')
 
 
 def write_chart_4_lads(ict_manager, coverage_obligation_type, pop_scenario, throughput_scenario, coverage_scenario, intervention_strategy, results, index, TIMESTEPS, OUTPUT_FOLDER):
@@ -312,11 +313,11 @@ def write_chart_4_lads(ict_manager, coverage_obligation_type, pop_scenario, thro
     if ENABLE_SUB_PLOTS:
         # Maps
         print('- Drawing Chart 4 LADs...Total capacity during all years')
-        maps.print_map_year_all(chart, "Total capacity per year", 4, TIMESTEPS, False, results, '4_1_capacity_per_year', suffix, 'Greens')
+        maps.print_map_year_all(chart, "Capacity(Mbps/km2)", 4, TIMESTEPS, 'else', results, '4_1_capacity_per_year', suffix, 'Greens')
         print('- Drawing Chart 4 LADs...Total demand during all years')
-        maps.print_map_year_all(chart, "Total demand per year", 5, TIMESTEPS, False, results, '4_2_demand_per_year', suffix, 'Reds')
+        maps.print_map_year_all(chart, "Demand(Mbps/km2)", 5, TIMESTEPS, 'else', results, '4_2_demand_per_year', suffix, 'Reds')
         print('- Drawing Chart 4 LADs...Total population covered during all years')
-        maps.print_map_year_all(chart, "Total population covered per year", 6, TIMESTEPS, True, results, '4_3_pop_covered_per_year', suffix, 'Greens')
+        maps.print_map_year_all(chart, "Population covered", 6, TIMESTEPS, 'Percentage', results, '4_3_pop_covered_per_year', suffix, 'Greens')
 
    
 def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FOLDER):
@@ -332,7 +333,7 @@ def write_general_charts(ict_manager, results, RUN_OPTIONS, TIMESTEPS, OUTPUT_FO
         print('- Plotting % population covered comparison per strategy and year')
         plots.plot_several_lines_years(ict_manager, results, option, TIMESTEPS, 0, 4, "Population covered", ['Time', 'Population percentage'], True, '{}_2_population_covered_per_strategy'.format(key))
         print('- Plotting Capacity margin per strategy and year')
-        plots.plot_several_lines_years(ict_manager, results, option, TIMESTEPS, 0, 6, "Capacity margin", ['Time', 'Capacity margin'], False, '{}_3_capacity_margin_per_strategy'.format(key))
+        plots.plot_several_lines_years(ict_manager, results, option, TIMESTEPS, 0, 6, "Capacity margin", ['Time', 'Capacity margin (Mbps/km2)'], False, '{}_3_capacity_margin_per_strategy'.format(key))
         option_number += 1
 
     # print('- Saving gifs')

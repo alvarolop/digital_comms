@@ -37,12 +37,22 @@ class Results:
 
         # self.covered_real = {}
 
+        self.strategy_name = {
+            'minimal':                  'Minimum Intervention',
+            'macrocell':                'Spectrum integration',
+            'macrocell_700':            '700MHz spectrum integration',
+            'small_cell':               'Small cells strategy',
+            'small_cell_and_spectrum':  'Hybrid strategy',
+            'macrocell_only_700':       '700MHz densification',
+        }
+
         self.output_path = output_path
         self.shapefile_path = shapefile_path
         self.population_2020 = 0
+        self.current_run_option = None
 
         self.gifs_filenames = collections.defaultdict(list)
-        self.cap_margin_bounds_plot = [-6000,6000]
+        self.cap_margin_bounds_plot = [-1000, 1000]
         self.cap_margin_bounds_maps = [-100, 100]
         self.summary_graphs_combinations = {}
 

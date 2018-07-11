@@ -140,11 +140,8 @@ class ICTManager(object):
         population_with_coverage = sum([pcd_sector.population for pcd_sector in self.postcode_sectors.values() if pcd_sector.lad_id[0] == country_initial_letter if pcd_sector.capacity >= pcd_sector.threshold_demand]) # self.service_obligation_capacity * pcd_sector.population_density
 #        total_pop = sum([pcd_sector.population for pcd_sector in self.postcode_sectors.values() if pcd_sector.lad_id[0] == country_initial_letter])
         total_pop = self.pop_per_country[country_initial_letter]
-        
         ratio = float(population_with_coverage) / total_pop
-        
 #        print ("Letter = {}, PCD = {}, Pop_covered = {},  Total_pop = {}, Ratio = {}".format(country_initial_letter, pcd.id, population_with_coverage, total_pop, ratio))
-
         return ratio
         
 
