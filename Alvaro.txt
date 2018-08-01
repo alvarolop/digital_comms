@@ -1,0 +1,40 @@
+####
+# USAGE
+####
+conda activate TFM
+cd .\git\digital_comms
+python setup.py install
+python .\scripts\run.py
+
+####
+# INFO ABOUT GEOTYPES
+####
+----------------------
+Count of geotypes:
+Urban => 688
+Suburban => 4905
+Rural => 3392
+----------------------
+Limits of population between geotypes:
+Urban => 7959
+Suburban => 782
+Rural => 0
+----------------------
+
+######
+# USING MATPLOTLIB
+# https://chrishavlin.wordpress.com/2016/11/16/shapefiles-tutorial/
+######
+
+1. Install new packages
+
+conda update -n base conda
+conda install -c conda-forge matplotlib
+conda install -c conda-forge numpy
+conda install -c conda-forge pyshp
+conda install -c plotly plotly 
+
+conda install -c anaconda basemap
+
+# Creating gifs - http://imageio.github.io/
+conda install -c conda-forge imageio
