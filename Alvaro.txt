@@ -1,54 +1,32 @@
-﻿## THIS IS THE LATEST VERSION OF THE CODE
-
-Utils
-
-###
-# Anaconda Prompt
-###
+####
+# USAGE
+####
 conda activate TFM
-
 cd .\git\digital_comms
-
 python setup.py install
-
 python .\scripts\run.py
 
-pop_{}_throughput_{}_coverage_{} => chart_1_pop_static2017_throughput_base_coverage_high.csv
-
-plot_chart_1('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_1_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-plot_chart_2('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_2_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-plot_chart_3('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_3_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-
-
-plot_chart_1_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_1_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-plot_chart_2_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_2_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-plot_chart_3_lads('D:\Dropbox\00TFM\Digital Comms Output\csv\chart_3_lads_pop_static2017_throughput_base_coverage_high.csv',"pop_static2017_throughput_base_coverage_high")
-
-
-######
-URBAN    => pcd1 (M607) until pcd5593(CH411)
-SUBURBAN => pcd5594(BD123) until pcd8985(PH304)
-RURAL    => There are no rural areas in this model
-
+####
+# INFO ABOUT GEOTYPES
+####
 ----------------------
-Here are my geotypes!
+Count of geotypes:
 Urban => 688
 Suburban => 4905
 Rural => 3392
 ----------------------
-
-geotype	    population_density
-Urban	    7959
-Suburban	782
-Rural	    0
-
+Limits of population between geotypes:
+Urban => 7959
+Suburban => 782
+Rural => 0
+----------------------
 
 ######
 # USING MATPLOTLIB
 # https://chrishavlin.wordpress.com/2016/11/16/shapefiles-tutorial/
 ######
 
-1. Install the new packages
+1. Install new packages
 
 conda update -n base conda
 conda install -c conda-forge matplotlib
@@ -60,43 +38,3 @@ conda install -c anaconda basemap
 
 # Creating gifs - http://imageio.github.io/
 conda install -c conda-forge imageio
-
-
-https://github.com/oliviaguest/gini
-
-
-
-2. Copy the code
-
-
-
-
-
-
-1. Recibir cambios git:
-
-git pull
-
-
-
-2. Guardar cambios localmente y pushearlos a git. En el comando push hay que poner usuario y contraseña de git.
-
-git status
-git add -A
-git status
-git commit -m "Your commit message"
-
-git push
-
-
-git config --global user.email "alvarolop.medina@gmail.com"
-git config --global user.name "alvarolop"
-
-
-
-
-
-1. budget_limit = True,  invest_by_demand = true
-2. budget_limit = False, invest_by_demand = true
-3. budget_limit = False, invest_by_demand = False
-4. budget_limit = True,  invest_by_demand = False
