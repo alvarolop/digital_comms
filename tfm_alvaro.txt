@@ -1,0 +1,123 @@
+####
+#Herramientas del entorno:
+####
+- Conda / Anaconda => Esto sirve para tener un entorno "enjaulado" para que lo que instales aquí solo afecte al proyecto y que puedas tener otras instalaciones o configuraciones para otros proyectos.
+
+https://www.anaconda.com/download/
+
+- Python: Este se instala desde la consola de Anaconda (Al menos en Windows es una consola distinta que está en Program files/ Anaconda....
+
+- Entorno para el proyecto: Este comando crea un entorno con el nombre que quieras (En mi caso TFM) y la última versión de python 3.
+$ conda create --name TFM python=3
+
+- Spyder: En principio está instalado directamente. Está en esta ruta:
+C:\Programs\Anaconda\envs\TFM\Scripts\spyder.exe
+Nota: Está instalado dentro de TFM por lo que hay una instalación de spyder para cada entorno! Así una no entra en conflicto con el resto y puedes tener varias configuraciones.
+
+
+
+####
+# Preparación de digital_comms de Álvaro: 
+####
+
+git clone https://github.com/alvarolop/digital_comms
+cd digital_comms/ 
+#  Target the data files, modify `base_path` in file `scripts/script_config.ini`
+conda activate TFM
+python setup.py develop
+python setup.py install
+python .\scripts\run.py
+
+Cada vez que se cambia algo de la librería hay que hacer install otra vez antes de correr el run de nuevo:
+python setup.py install
+python .\scripts\run.py 
+
+
+
+####
+# Preparación del original de digital_comms:
+####
+
+Hay que abrir una consola de comando de Anaconda, no vale la normal de Windows.
+
+1) Clone the repository
+$ git clone https://github.com/nismod/digital_comms.git
+or download it through the github website and unzip
+
+2) Go into the directory that was just cloned or unzipped on your local disk
+$ cd digital_comms/ 
+
+3) Activate the environment
+$ source activate TFM
+or on windows: conda activate TFM
+
+4) Run the install script
+$ python setup.py develop
+
+5) Target the data files, modify `base_path` in file `scripts/script_config.ini`
+
+6) Run the script
+$ python run.py
+
+
+
+######
+# USING MATPLOTLIB
+# https://chrishavlin.wordpress.com/2016/11/16/shapefiles-tutorial/
+# Puede que sea necesario instalar estos paquetes. Si al hacer "python run.py" no funciona, instala estos paquetes.
+######
+
+1. Install new packages
+
+conda update -n base conda
+conda install -c conda-forge matplotlib
+conda install -c conda-forge numpy
+conda install -c conda-forge pyshp
+conda install -c plotly plotly 
+
+conda install -c anaconda basemap
+
+# Creating gifs - http://imageio.github.io/
+conda install -c conda-forge imageio
+
+
+
+####
+# USAGE
+####
+conda activate TFM
+cd .\git\digital_comms
+python setup.py install
+python .\scripts\run.py
+
+
+
+####
+#Comandos Git
+####
+1. Recibir cambios git:
+git pull
+ 
+2. Guardar cambios localmente y pushearlos a git. En el comando push hay que poner usuario y contraseña de git. 
+git status
+git add -A
+git commit -m "Your commit message"
+git push 
+
+
+
+####
+# INFO ABOUT GEOTYPES
+####
+----------------------
+Count of geotypes:
+Urban => 688
+Suburban => 4905
+Rural => 3392
+----------------------
+Limits of population between geotypes:
+Urban => 7959
+Suburban => 782
+Rural => 0
+----------------------
+
